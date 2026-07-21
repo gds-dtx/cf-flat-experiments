@@ -1,7 +1,7 @@
 # cf-flat-experiemnts
 CustomerFirst flat site experiments
 
-This repo contains a number of experiemtns that require version control and are being interated with partner organisations.
+This repo contains a number of experiments that require version control and are being iterated with partner organisations.
 
 # CustomerFirst
 Build the future of public services with us
