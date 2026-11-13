@@ -119,9 +119,9 @@ npm run start    # production-style start
 
 Server: **http://localhost:3000**.
 
-### Optional: Claude Code launch config
+### Optional: launch config
 
-To let Claude Code start the preview, add `.claude/launch.json`:
+To let the assistant start the preview, add `.claude/launch.json`:
 
 ```json
 {

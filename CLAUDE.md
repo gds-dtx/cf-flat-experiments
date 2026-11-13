@@ -1,6 +1,6 @@
 # CustomerFirst design
 
-How the CustomerFirst design team builds prototypes and other design artefacts with Claude. The team owns this file. If a rule here gets in the way of good work, change it.
+How the CustomerFirst design team builds prototypes and other design artefacts. The team owns this file. If a rule here gets in the way of good work, change it.
 
 ## How the repo is organised
 
