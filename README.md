@@ -22,7 +22,7 @@ This is where the CustomerFirst design team keeps its prototypes, service maps a
 - [`.claude/skills/`](.claude/skills): skills used when you work here, to build prototypes and review them.
 - One folder per project: [Drivers Medical](drivers-medical/) and [NHS App](nhs-app/).
 
-The [government communication skills](https://github.com/strachcity/gov-communication-skills) for letters, emails, texts and what they reveal about a person are included in `.claude/skills/`, so nothing needs installing.
+The government communication skills for letters, emails, texts and what they reveal about a person are included in `.claude/skills/`, so nothing needs installing.
 
 ## Working in this repo
 
