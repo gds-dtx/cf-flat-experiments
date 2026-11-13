@@ -128,6 +128,10 @@ When a prototype includes what a person is sent or told (letters, emails, texts,
 
 They flag legal, policy and privacy questions rather than answering them. Put those questions in a design note, not in the prototype as if they were settled.
 
+## Commits and pull requests
+
+Never add a `Co-Authored-By` trailer, a "Generated with" line or any other tool attribution to a commit message or pull request description. Write the message as the person committing.
+
 ## Checking your work
 
 Show previews as a published Artifact, not in the browser pane. Publish the prototype file with the Artifact tool and give the link. Artifacts are private until the person shares them. The Artifact tool wants no `<!doctype>`, `<html>`, `<head>` or `<body>` tags and a short `<title>`, so publish a copy with those stripped and leave the file in the repo as it is.
