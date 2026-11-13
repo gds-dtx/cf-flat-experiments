@@ -51,6 +51,13 @@ jobs:
           mkdir -p _site/drivers-medical/staying-informed/secure-messages
           cp -r drivers-medical/staying-informed/secure-messages/dist/. _site/drivers-medical/staying-informed/secure-messages/
 
+      - name: Zip the skills for download
+        run: |
+          mkdir -p _site/skills
+          cd .claude/skills
+          for d in */; do zip -qr "../../_site/skills/${d%/}.zip" "${d%/}"; done
+          zip -qr ../../_site/skills/all-skills.zip .
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CustomerFirst Skills</title>
+<meta name="description" content="Agentic skills for CustomerFirst: knowledge, making and studio skills to download for Claude and Copilot.">
+<style>
+:root{--navy:#04084A;--surface:rgba(166,202,237,.06);--surface-hover:rgba(166,202,237,.12);--edge:rgba(166,202,237,.16);--blue:#8B96FF;--cyan:#16EEEE;--pale:#A6CAED;--text:#F4F7FC;--focus:#FFDD00;--gutter:clamp(20px,5vw,72px);--on-accent:#04084A;--card:#121A5E}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:var(--navy);scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;color:var(--text);font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.55;-webkit-text-size-adjust:100%;background:radial-gradient(1100px 700px at 80% -10%,rgba(86,102,255,.42),transparent 70%),radial-gradient(800px 600px at -10% 55%,rgba(22,238,238,.08),transparent 70%),var(--navy);background-repeat:no-repeat;position:relative;overflow-x:hidden}
+.crest{position:absolute;top:80px;right:-200px;width:900px;max-width:none;opacity:.05;pointer-events:none;user-select:none}
+a{color:inherit}
+a:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:6px}
+.wrap{position:relative;max-width:1440px;margin:0 auto;padding-inline:var(--gutter)}
+.visually-hidden{position:absolute!important;width:1px;height:1px;margin:0;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip{position:absolute;left:16px;top:-80px;background:var(--focus);color:var(--navy);padding:12px 16px;font-weight:700;z-index:10}
+.skip:focus{top:8px}
+h1,h2,p{margin-top:0}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:32px 0;flex-wrap:wrap}
+.logo{display:block;height:34px;width:auto;max-width:100%}
+nav ul{display:flex;gap:clamp(16px,3vw,36px);list-style:none;margin:0;padding:0;flex-wrap:wrap}
+nav a{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;color:var(--pale);padding:6px 0}
+nav a:hover{color:var(--cyan)}
+.hero{padding-block:clamp(48px,8vh,96px) 48px}
+.hero h1{font-size:clamp(42px,7vw,84px);line-height:1.03;letter-spacing:-0.04em;margin-bottom:24px;max-width:13em;text-wrap:balance}
+.hero h1 .thin{font-weight:300}.hero h1 .bold{font-weight:800}
+.lede{font-size:clamp(20px,2.4vw,28px);line-height:1.4;max-width:30em;margin-bottom:20px}
+.sub{max-width:38em;color:var(--pale);margin-bottom:0}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:clamp(40px,6vh,64px);padding:0;list-style:none}
+.card{position:relative;display:flex;flex-direction:column;min-height:240px;padding:32px 32px 28px;border-radius:12px;background:var(--card);border:1px solid var(--edge);border-top:6px solid var(--accent,var(--cyan));transition:background .2s,border-color .2s,transform .2s}
+.card:hover{background:var(--surface-hover);border-color:rgba(166,202,237,.34);transform:translateY(-3px)}
+.card h2{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 12px;font-size:26px;letter-spacing:-0.02em;line-height:1.2}
+.card h2 a{text-decoration:none}
+.card h2 a::after{content:"";position:absolute;inset:0;border-radius:12px}
+.card h2 svg{width:22px;height:22px;color:var(--cyan);flex:none}
+.card p{margin:0;color:var(--pale);font-size:17px;line-height:1.55}
+.card .tag{margin-top:auto;padding-top:18px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--blue)}
+.card.first{--accent:#16EEEE}.card.mk{--accent:#A6CAED}.card.st{--accent:#AEAEAE}
+.card .big{font-size:72px;font-weight:700;line-height:1;letter-spacing:-0.03em;color:var(--cyan);margin-bottom:14px}
+.sec{padding-block:clamp(56px,8vw,96px)}
+.split{display:grid;grid-template-columns:minmax(260px,5fr) 8fr;gap:clamp(32px,5vw,80px);align-items:start}
+.split .head{position:sticky;top:32px}
+@media (max-width:960px){.split{grid-template-columns:1fr}.split .head{position:static}}
+.label{margin:0 0 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--cyan)}
+.sec h2{font-size:clamp(32px,3.8vw,48px);letter-spacing:-0.03em;line-height:1.1;margin-bottom:16px}
+.intro{max-width:30em;color:var(--pale);font-size:19px;margin:0}
+.feature{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;padding:30px 32px;margin-bottom:12px;border-radius:12px;background:linear-gradient(135deg,rgba(86,102,255,.28),rgba(22,238,238,.08));border:1px solid rgba(22,238,238,.4)}
+.feature h3{color:#F4F7FC;margin:0 0 6px;font-size:22px;letter-spacing:-0.01em}
+.feature p{margin:0;max-width:34em;color:#A6CAED;font-size:16px}
+.cta{display:inline-flex;align-items:center;gap:10px;padding:13px 22px;border-radius:999px;background:var(--cyan);color:var(--on-accent);font-weight:700;font-size:16px;text-decoration:none;transition:transform .2s,background .2s}
+.cta:hover{background:#6FF6F6;transform:translateY(-2px)}
+.cta svg{width:18px;height:18px}
+.ghost{color:var(--text);font-weight:700;font-size:16px;text-underline-offset:4px}
+.ghost:hover{color:var(--cyan)}
+.feature .acts{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.skills{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.skill{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 22px 22px 26px;border-radius:12px;background:var(--surface);border:1px solid var(--edge);transition:background .2s,border-color .2s}
+.skill:hover{background:var(--surface-hover);border-color:rgba(166,202,237,.32)}
+.skill .body{flex:1;min-width:0}
+.skill .name{color:var(--text);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:18px;font-weight:700;text-decoration:none;overflow-wrap:anywhere}
+a.name:hover{text-decoration:underline;text-underline-offset:4px}
+.skill p{margin:6px 0 0;font-size:16px;line-height:1.5;color:var(--pale);max-width:46em}
+.get{flex:none;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;font-size:14px;font-weight:700;text-decoration:none;border:1.5px solid var(--cyan);color:var(--cyan);transition:background .2s,color .2s;white-space:nowrap}
+a.pill:hover{background:var(--cyan);color:var(--on-accent)}
+.pill svg{width:15px;height:15px}
+.pill.soon{border-color:var(--edge);color:var(--pale);font-weight:400}
+.install{padding-block:clamp(56px,8vw,96px);max-width:760px}
+.install h2{font-size:28px;letter-spacing:-0.02em;margin-bottom:10px}
+.install p{color:var(--pale);margin-bottom:16px}
+.install pre{margin:0;padding:14px 16px;border-radius:10px;background:rgba(0,0,0,.28);overflow-x:auto}
+.install code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px}
+.all{margin-top:20px}
+footer{padding-block:88px 56px}
+footer .wrap{display:grid;gap:20px}
+footer .logo{height:28px;opacity:.9}
+footer p{margin:0;max-width:46em;color:var(--pale);font-size:14px;line-height:1.6}
+@media (max-width:860px){.cards{grid-template-columns:1fr}.card{min-height:0}.crest{width:560px;right:-220px}}
+@media (max-width:640px){.skill{flex-direction:column;align-items:flex-start;gap:14px;padding:18px}.get{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<img class="crest" src="assets/crest.png" alt="">
+<a class="skip" href="#main">Skip to main content</a>
+<header><div class="wrap">
+  <img class="logo" src="assets/customerfirst-logo.png" alt="CustomerFirst">
+  <nav aria-label="Sections"><ul><li><a href="#knowledge">Knowledge</a></li><li><a href="#making">Making</a></li><li><a href="#studio">Studio</a></li><li><a href="#install">Install</a></li></ul></nav>
+</div></header>
+<main id="main">
+  <div class="wrap">
+    <section class="hero" aria-labelledby="title">
+      <h1 id="title"><span class="thin">Customer</span><span class="bold">First</span> Agentic Skills</h1>
+      <p class="lede">How CustomerFirst makes things, written down so an agent can do it the same way.</p>
+      <p class="sub">Start with the CF wiki, our shared brain. Or take the skills one at a time and use them in Claude. Copilot versions are being built.</p>
+    </section>
+    <ul class="cards">
+      <li class="card first"><h2><a href="#knowledge">Knowledge</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6"/></svg></h2><p>The CF wiki is our shared brain, for us and our agents.</p><span class="tag">Start here</span></li>
+      <li class="card mk"><h2><a href="#making">Making</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6"/></svg></h2><p>How we build prototypes, iterate and hand over.</p><span class="tag">3 skills</span></li>
+      <li class="card st"><h2><a href="#studio">Studio</a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6"/></svg></h2><p>Navigating government policy, service patterns, the Service Manual, the Service Standard and what comes after.</p><span class="tag">4 skills</span></li>
+    </ul>
+  </div>
+    <section class="sec " id="knowledge" aria-labelledby="knowledge-h"><div class="wrap split">
+      <div class="head"><p class="label">01 / Knowledge</p>
+      <h2 id="knowledge-h">CF wiki, our shared brain</h2>
+      <p class="intro">Ask the agent, or take its skills one at a time. We are lifting them out of the wiki so they work in Claude Cowork too.</p></div>
+      <div class="main">
+      <div class="feature">
+        <div><h3>The CF wiki agent</h3><p>Our shared brain, for us and our agents. It runs on our organisation's agent platform, holds the core skills we work to, and needs your work account.</p></div>
+        <div class="acts"><a class="cta" href="https://m365.cloud.microsoft/chat/?titleId=T_dc865eeb-23b3-d5c9-19cc-312fef5ff639&amp;source=embedded-builder">Open in Copilot <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m0 0-6-6m6 6-6 6"/></svg></a><a class="ghost" href="https://github.com/strachcity/cf-wiki">CF wiki on GitHub</a></div>
+      </div>
+      <ul class="skills">
+        <li class="skill"><div class="body"><span class="name">deck-building</span><p>How we build a CustomerFirst deck: structure, look and tone.</p></div><div class="get"><span class="pill soon">Claude · soon</span><span class="pill soon">Copilot · soon</span></div></li>
+        <li class="skill"><div class="body"><span class="name">blog-writing</span><p>How we write and edit a CustomerFirst blog post.</p></div><div class="get"><span class="pill soon">Claude · soon</span><span class="pill soon">Copilot · soon</span></div></li>
+      </ul></div>
+    </div></section>
+    <section class="sec " id="making" aria-labelledby="making-h"><div class="wrap split">
+      <div class="head"><p class="label">02 / Making</p>
+      <h2 id="making-h">Build, iterate and hand over</h2>
+      <p class="intro">Taking a prototype far enough that developers can build from it.</p></div>
+      <div class="main">
+      <ul class="skills">
+        <li class="skill"><div class="body"><a class="name" href=".claude/skills/govuk-html-prototype/SKILL.md">govuk-html-prototype</a><p>A prototype as one HTML file that opens in any browser with nothing to install. Our default.</p></div><div class="get"><a class="pill" href="skills/govuk-html-prototype.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>Claude<span class="visually-hidden"> skill: govuk-html-prototype</span></a><span class="pill soon">Copilot · soon</span></div></li>
+        <li class="skill"><div class="body"><a class="name" href=".claude/skills/govuk-prototype/SKILL.md">govuk-prototype</a><p>The GOV.UK Prototype Kit, for when a journey is being handed to developers as a spec.</p></div><div class="get"><a class="pill" href="skills/govuk-prototype.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>Claude<span class="visually-hidden"> skill: govuk-prototype</span></a><span class="pill soon">Copilot · soon</span></div></li>
+        <li class="skill"><div class="body"><a class="name" href=".claude/skills/design-review/SKILL.md">design-review</a><p>Checks a prototype against our rules, the Service Standard, usability heuristics and WCAG 2.2 AA before anyone sees it.</p></div><div class="get"><a class="pill" href="skills/design-review.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>Claude<span class="visually-hidden"> skill: design-review</span></a><span class="pill soon">Copilot · soon</span></div></li>
+      </ul></div>
+    </div></section>
+    <section class="sec " id="studio" aria-labelledby="studio-h"><div class="wrap split">
+      <div class="head"><p class="label">03 / Studio</p>
+      <h2 id="studio-h">Policy, patterns and standards</h2>
+      <p class="intro">What a service says to people, and the rules it has to meet while saying it.</p></div>
+      <div class="main">
+      <ul class="skills">
+        <li class="skill"><div class="body"><a class="name" href=".claude/skills/government-communication/SKILL.md">government-communication</a><p>The front door. Drafts, adapts or reviews a message for your service, or plans the messages a case journey needs.</p></div><div class="get"><a class="pill" href="skills/government-communication.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>Claude<span class="visually-hidden"> skill: government-communication</span></a><span class="pill soon">Copilot · soon</span></div></li>
+        <li class="skill"><div class="body"><a class="name" href=".claude/skills/case-communication-patterns/SKILL.md">case-communication-patterns</a><p>One pattern for each moment in a case, like "we've received it" or "we couldn't reach you".</p></div><div class="get"><a class="pill" href="skills/case-communication-patterns.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>Claude<span class="visually-hidden"> skill: case-communication-patterns</span></a><span class="pill soon">Copilot · soon</span></div></li>
+        <li class="skill"><div class="body"><a class="name" href=".claude/skills/govuk-content/SKILL.md">govuk-content</a><p>Drafts, rewrites and reviews customer content against GOV.UK style, with a plain English check.</p></div><div class="get"><a class="pill" href="skills/govuk-content.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>Claude<span class="visually-hidden"> skill: govuk-content</span></a><span class="pill soon">Copilot · soon</span></div></li>
+        <li class="skill"><div class="body"><a class="name" href=".claude/skills/privacy-aware-communications/SKILL.md">privacy-aware-communications</a><p>Checks a message in each channel against UK GDPR and ICO guidance, and can draft the communications part of a DPIA for your DPO to review.</p></div><div class="get"><a class="pill" href="skills/privacy-aware-communications.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>Claude<span class="visually-hidden"> skill: privacy-aware-communications</span></a><span class="pill soon">Copilot · soon</span></div></li>
+      </ul></div>
+    </div></section>
+
+  <div class="wrap">
+    <section class="install" id="install" aria-labelledby="use-h">
+      <h2 id="use-h">Install a Claude skill</h2>
+      <p>Each zip holds one skill folder. Unzip it into your project's skills folder, open the project and ask for what you need. The right skill picks itself up.</p>
+      <pre><code>unzip govuk-content.zip -d .claude/skills</code></pre>
+      <p class="all"><a class="cta" href="skills/all-skills.zip">Download all Claude skills <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg></a></p>
+      <p><a class="ghost" href="https://github.com/gds-dtx/cf-flat-experiments">Making and studio skills on GitHub</a></p>
+    </section>
+  </div>
+</main>
+<footer><div class="wrap">
+  <img class="logo" src="assets/customerfirst-logo.png" alt="CustomerFirst">
+  <p>Skills guide design and drafting. They flag legal, policy and privacy questions for the right person to answer, and never settle them. The studio skills are adapted from the government communication skills, published under the Open Government Licence v3.0.</p>
+</div></footer>
+</body>
+</html>
