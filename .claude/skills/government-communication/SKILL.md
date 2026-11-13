@@ -1,0 +1,174 @@
+---
+name: government-communication
+description: "The front door for drafting, adapting or reviewing a UK government service's customer communications, like emails, text messages, letters and status pages about a case. Use it whenever someone wants a message for their service, wants to check one, or wants to plan the messages for a case journey. It establishes the service's context first, creating one with the user if needed, then uses case-communication-patterns, privacy-aware-communications and govuk-content to return a first draft and a list of what still needs a service decision."
+---
+
+# Government communication
+
+The front door to the plugin. It turns a request about one service's communications into a strong first draft, using generic patterns and the service's own facts.
+
+It works for any government service. Service facts come from a service context, which belongs to the user. This skill contains no service's rules.
+
+## Reference files
+
+- `references/service-context.md`: when helping the user create or update a service context, taking facts from documentation, or recording responses from a decision maker. It has the template and the full rules. If the user gave you a service context, the rules in step 1 are enough
+
+The other skills in this plugin hold the guidance:
+
+- `case-communication-patterns`: which pattern fits, and the baseline copy
+- `privacy-aware-communications`: what the message can reveal, in each channel
+- `govuk-content`: how it's written
+
+## Read only what the task needs
+
+Each skill's own rules always apply. What changes is which reference files you read.
+
+**Drafting or adapting a message from a pattern**, the usual task:
+
+- `case-communication-patterns`: its SKILL.md, `references/moments.md`, and the one pattern file you need
+- `privacy-aware-communications`: its SKILL.md and `references/channels.md`. Add `references/disclosure.md` if the message tells someone about another person, and `references/kinds-of-message.md` for feedback, optional or promotional content
+- `govuk-content`: its SKILL.md. The baseline copy already follows the style guide, so read `references/style-a-to-z.md` only to check wording you add or change, and `references/channels.md` only for a channel the pattern has no baseline for
+
+**Other tasks** need more:
+
+- creating or updating a service context: `references/service-context.md`
+- reviewing an existing message: `govuk-content` and `privacy-aware-communications` as those skills say, with all the references they mark for a review
+- a DPIA, or a disclosure inventory for a set of messages: `privacy-aware-communications` as that skill says
+- planning the messages for a case journey: `references/moments.md`. Read a pattern file only when you draft for that moment
+
+## How it works
+
+Follow these steps in order. Don't skip a step because the request seems simple.
+
+### 1. Establish the service context
+
+Look for a service context in this order:
+
+1. Something in the conversation, like pasted facts or an attached file.
+2. A file in the user's project, usually called `service-context.md`.
+3. Documentation the user points to, like a service description or existing letters.
+
+If there isn't one, help the user create one. Follow "When there isn't one yet" in `references/service-context.md`. Only ask for the facts this request needs. Don't make the user fill in a whole context before they get a draft.
+
+If the user doesn't want to give any context, carry on. Use placeholders for every service fact.
+
+Use descriptive facts the user gives you, like the service name or contact details, without asking for a status. Use decisions, like timescales, consequences, channel and disclosure decisions, only if they're marked "confirmed". Anything else becomes a placeholder and goes on the list for the service.
+
+When you read a service context:
+
+- a descriptive fact marked "needs confirmation" or "open question" isn't used
+- a fact taken from documentation, not given by the user, is listed under "Taken from documentation" with its source
+- if 2 facts conflict, use neither. Flag both
+- a decision with no status is "needs confirmation"
+- a hypothesis or communication judgement is never a policy decision, even if it's marked confirmed. Say so if you see one marked that way
+- "About the service" and "Users" are background, not facts to put in a message
+- "must" is right only if the service context says it's a legal requirement. Otherwise use "need to", and flag it
+- a message missing from "Formal or legally significant communications" is not confirmation it has no legal effect
+- a confirmed fact with no owner, or with an old date, can be used. Note the missing owner or the date
+
+These summarise "2 kinds of fact" and "Reading a service context" in `references/service-context.md`. If they differ, that file wins.
+
+### 2. Understand the request
+
+Work out:
+
+- **the task:** draft a new message, adapt a pattern, review an existing message, or plan the messages for a case journey
+- **the channels:** email, text message, letter or status page. If the user doesn't say, use the channels the service context lists as in use. Don't draft for planned channels unless asked. If the context doesn't say either, draft an email and a text message and say why. Follow "How to use the baseline copy" in `case-communication-patterns` for choosing between channels
+- **the customer's situation:** what has just happened in their case, from their point of view
+- **how many situations:** if the request covers several, handle each one separately, then give one combined list of what needs a decision
+
+### 3. Identify the pattern
+
+Use `case-communication-patterns` to find the moment, its variant and any modifier, like reminder or delay.
+
+If 2 moments could fit, say which you chose and why. If none fits, say so. Don't force it, and don't invent a new moment.
+
+### 4. Adapt the pattern with service facts
+
+Start from the pattern's baseline copy for each channel. Fill the placeholders from the service context: descriptive facts as given, and decisions only if confirmed. Use the service's terminology, and keep internal terms out.
+
+Keep the pattern's core information and order. If the service context records a justified departure from the pattern, apply it and say so.
+
+Resolve every optional block before you return a draft. Never leave an `[If ...:]` or `[End if]` line in a draft:
+
+- if the condition applies, keep the content and remove the 2 marker lines
+- if it doesn't apply, like a challenge route when the customer got what they asked for, remove the whole block
+- if you don't know, remove the block from the draft, and list the condition under "Needs a service decision", with the text that would go in
+
+### 5. Run privacy and policy checks
+
+Use `privacy-aware-communications` on what each version reveals, in each channel. Work through the pattern's "Privacy and policy checkpoints".
+
+For each checkpoint:
+
+- if a confirmed decision in the service context covers it, apply it and cite its owner and date
+- if not, give the risk heuristic and its lower-risk option, marked "needs confirmation", or flag the exact question and who could answer it
+
+Until a confirmed decision covers a disclosure, the draft uses the lower-risk wording. This holds even if the user asks for the more revealing wording. Put that wording under "Needs a service decision", with what it reveals and what the customer gains from it. Never draft the more revealing wording with the lower-risk one as the fallback.
+
+Only a confirmed policy decision settles a privacy, legal or policy checkpoint. A communication judgement or precedent can shape wording, but if one is the only thing covering a checkpoint, apply it and flag that it needs confirming as a decision.
+
+Never infer a policy position, a consequence, a timescale or legal effect. Never treat the service's published content alone as its policy, because it can be out of date.
+
+### 6. Apply GOV.UK content guidance
+
+Use `govuk-content` on each draft, as a drafting check. Fix the wording without changing the meaning or adding facts.
+
+If the service context records a language duty, like Welsh, flag that each message needs a version in that language. Don't translate unless the user asks.
+
+### 7. Return the result
+
+Use the output format below.
+
+## Output
+
+For a draft:
+
+```
+Pattern: [moment], variant [variant], [modifier, if any]
+
+[Channel]
+[The draft, formatted for the channel]
+
+[Repeat for each channel]
+
+Needs a service decision
+- [each placeholder still unfilled, and each privacy, policy or legal question, with who could answer it]
+
+Used from the service context
+- [each confirmed decision used, with its owner and date]
+- [each descriptive fact used]
+
+Taken from documentation
+- [each descriptive fact taken from documentation, with its source, for the user to check]
+
+Notes
+- [any judgement you made, like choosing between 2 moments, and any departure from the pattern]
+```
+
+For several situations, repeat the pattern line and the drafts for each, then give the 3 lists once, covering all of them.
+
+Lead with the drafts. Keep "Needs a service decision" specific: say what's needed, not that "more information is needed". Put the items that would change the draft most first.
+
+"Needs a service decision" is the one list for everything still open. Put the other skills' lists in it, like `govuk-content`'s "Check before publishing". Don't list ((double bracket)) placeholders. They're filled for each message, not decisions.
+
+If a message reveals personal or sensitive information, add a short "What each version reveals" table from `privacy-aware-communications` before "Needs a service decision".
+
+For a review, give the `govuk-content` review table, then:
+
+- **pattern gaps:** core information from the matching pattern that the message is missing
+- **privacy:** what the message reveals that needs a decision
+- **needs a service decision:** as above
+
+For a case journey, give the plan from `case-communication-patterns`, then list the facts the service context would need to draft each message.
+
+### Offer to update the service context
+
+If the user confirmed new facts during the conversation, offer the updated service context back to them, so they can save it in their own project. Never save it into this plugin.
+
+## Boundaries
+
+- don't decide legal effect, lawful basis, disclosure or policy. Flag them
+- don't fill a placeholder with a plausible guess
+- don't move a service's facts into the generic patterns or skills
+- don't present the draft as approved. It's a first draft for the service to check

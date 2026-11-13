@@ -120,7 +120,7 @@ Every prototype meets [WCAG 2.2 AA](https://www.gov.uk/guidance/accessibility-re
 
 ## Customer communications and privacy
 
-When a prototype includes what a person is sent or told (letters, emails, texts, notifications, status messages, phone scripts) or shows personal or health information, use the [government communication skills](https://github.com/strachcity/gov-communication-skills). This repo offers to install them when you open it in Claude.
+When a prototype includes what a person is sent or told (letters, emails, texts, notifications, status messages, phone scripts) or shows personal or health information, use the [government communication skills](https://github.com/strachcity/gov-communication-skills). They are included in `.claude/skills/`, copied from that repo.
 
 - `government-communication` drafts or reviews a message, and plans which messages a case journey needs.
 - `privacy-aware-communications` checks what a message or screen reveals about a person, in each channel, and who might see it.
