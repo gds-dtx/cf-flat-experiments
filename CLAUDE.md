@@ -130,6 +130,8 @@ They flag legal, policy and privacy questions rather than answering them. Put th
 
 ## Checking your work
 
+Show previews as a published Artifact, not in the browser pane. Publish the prototype file with the Artifact tool and give the link. Artifacts are private until the person shares them. The Artifact tool wants no `<!doctype>`, `<html>`, `<head>` or `<body>` tags and a short `<title>`, so publish a copy with those stripped and leave the file in the repo as it is.
+
 Run the `design-review` skill before a prototype goes in front of anyone. It checks the journey structure, the Service Standard questions, the heuristics, accessibility and the project's `DESIGN.md`, and lists what fails. It doesn't change anything unless you ask.
 
 ## How to work here
