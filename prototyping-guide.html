@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How We Prototype</title>
+<meta name="description" content="How to set up Claude and GitHub Desktop, build a prototype with our skills and publish it to a live link.">
+<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;800&display=swap');
+:root{--navy:#04084A;--ink:#1D2050;--muted:#4B4F7A;--link:#2F3FD6;--paper:#FFFFFF;--tint:#EEF0FF;--line:#D3D7F3;--cyan:#16EEEE;--focus:#FFDD00}
+*{box-sizing:border-box}
+html{background:var(--paper);scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,Helvetica,sans-serif;font-size:19px;line-height:1.65;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+a{color:var(--link);text-underline-offset:3px}
+a:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:4px}
+.skip{position:absolute;left:16px;top:-80px;background:var(--focus);color:var(--navy);padding:12px 16px;font-weight:700;z-index:10}
+.skip:focus{top:8px}
+.bar{background:var(--navy);padding-block:20px}
+.bar .in{max-width:1000px;margin:0 auto;padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.bar img{display:block;height:30px;width:auto;max-width:100%}
+.bar a.back{color:#A6CAED;font-size:15px}
+.bar a.back:hover{color:var(--cyan)}
+article{max-width:700px;margin:0 auto;padding:clamp(40px,7vw,72px) 20px 40px}
+h1{font-family:Inter,Arial,Helvetica,sans-serif;font-weight:800;font-size:clamp(38px,6vw,56px);line-height:1.05;letter-spacing:-0.035em;color:var(--navy);margin:0 0 20px;text-wrap:balance}
+.stand{font-size:clamp(20px,2.4vw,24px);line-height:1.45;color:var(--ink);margin:0 0 28px}
+h2{font-size:clamp(28px,4vw,34px);line-height:1.15;letter-spacing:-0.02em;color:var(--navy);margin:64px 0 16px;padding-top:8px;text-wrap:balance}
+h3{font-size:22px;line-height:1.3;color:var(--navy);margin:36px 0 8px}
+p{margin:0 0 18px}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;background:var(--tint);padding:2px 6px;border-radius:5px}
+.toc{margin:0 0 8px;padding:20px 24px;background:var(--tint);border-radius:12px}
+.toc p{margin:0 0 6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.toc ol{margin:0;padding-left:20px}
+.toc li{margin:2px 0}
+.need{margin:0 0 18px;padding-left:22px}
+.step{display:grid;grid-template-columns:44px 1fr;gap:0 14px;margin:0 0 6px}
+.step .n{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;font-size:18px;color:var(--link);padding-top:5px}
+.step h3{margin:0 0 6px}
+.prompt{margin:0 0 22px;background:var(--navy);border-radius:12px;padding:16px 20px 18px}
+.prompt .cap{margin:0 0 6px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#8B96FF}
+.prompt pre{margin:0;white-space:pre-wrap;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:1.5;color:#F4F7FC}
+pre.code{margin:0 0 18px;padding:14px 16px;border-radius:10px;background:var(--navy);color:#F4F7FC;overflow-x:auto}
+pre.code code{background:none;padding:0;color:inherit;font-size:15px}
+.tip{margin:0 0 22px;padding:16px 20px;background:var(--tint);border-radius:12px;font-size:17px}
+.tip strong{color:var(--navy)}
+figure{margin:8px 0 28px}
+figure img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line)}
+figure .ph{display:flex;align-items:center;justify-content:center;min-height:200px;padding:20px;text-align:center;border:2px dashed var(--line);border-radius:12px;background:var(--tint);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--muted)}
+figcaption{margin-top:8px;font-size:15px;color:var(--muted)}
+.ticks{margin:0 0 18px;padding-left:22px}
+.ticks li{margin:0 0 10px}
+.btn{display:inline-block;padding:12px 22px;border-radius:999px;background:var(--navy);color:#fff;font-weight:700;font-size:16px;text-decoration:none}
+.btn:hover{background:var(--link)}
+footer{background:var(--navy);margin-top:40px;padding-block:44px;color:#A6CAED;font-size:14px;line-height:1.6}
+footer .in{max-width:700px;margin:0 auto;padding-inline:20px;display:grid;gap:16px}
+footer img{height:26px;width:auto;display:block}
+footer p{margin:0}
+footer a{color:#fff}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<div class="bar"><div class="in"><a href="index.html"><img src="assets/customerfirst-logo.png" alt="CustomerFirst"></a><a class="back" href="index.html">All skills</a></div></div>
+<main id="main"><article>
+<h1>How we prototype</h1>
+<p class="stand">Build a prototype by talking to Claude in a folder on your laptop. Push it with GitHub Desktop and you get a live link to send to anyone. This walk-through covers the one-off setup, the workflow we follow and how to publish.</p>
+<nav class="toc" aria-label="In this guide"><p>In this guide</p><ol><li><a href="#setup">Set up once</a></li><li><a href="#workflow">A workflow that bends</a></li><li><a href="#live">Push it and get a shareable link</a></li><li><a href="#rules">What every prototype has</a></li></ol></nav>
+
+<h2 id="setup">Set up once</h2>
+<p>You need the Claude desktop app, GitHub Desktop and access to our repo. It takes about ten minutes and you only do it once.</p>
+<div class="step"><div class="n">01</div><div><h3>Install Claude</h3><p>Download the Claude desktop app from <a href="https://claude.ai/download">claude.ai/download</a> and sign in. Claude Code, where we build, is the Code tab inside it.</p></div></div>
+<div class="step"><div class="n">02</div><div><h3>Install GitHub Desktop</h3><p>Download <a href="https://desktop.github.com/">GitHub Desktop</a> and sign in with your GitHub account. It keeps your copy of the repo and does the pushing later, so you never need the command line.</p></div></div>
+<div class="step"><div class="n">03</div><div><h3>Get access to the repo</h3><p>Ask Pete Hallett to add your GitHub account to <code>gds-dtx/cf-flat-experiments</code>. Until that is done, the repo will not appear in the next step.</p></div></div>
+<div class="step"><div class="n">04</div><div><h3>Clone it to your laptop</h3><p>In GitHub Desktop choose File, then Clone Repository, pick <code>cf-flat-experiments</code> and press Clone. It lands in a folder on your laptop, usually inside <code>Documents/GitHub</code>. The skills and our team rules come with it.</p><figure><img src="assets/guide/clone.svg" alt="Cloning the repo in GitHub Desktop."><figcaption>Cloning the repo in GitHub Desktop. Simplified illustration, not an exact screenshot.</figcaption></figure></div></div>
+<div class="step"><div class="n">05</div><div><h3>Open the folder in Claude Code</h3><p>In Claude, open the Code tab and choose the folder you cloned. Pick the cloned folder itself, not the one above it, so the skills load.</p></div></div>
+<div class="step"><div class="n">06</div><div><h3>Check it worked</h3><p>Ask Claude this. It should name the prototyping skills.</p><div class="prompt"><p class="cap">Check</p><pre>Which skills do you have for building prototypes?</pre></div></div></div>
+<p>Working outside the repo? Download the skills and unzip them into your own project, then copy <code>CLAUDE.md</code> across, because the skills lean on it for our rules.</p>
+<pre class="code"><code>unzip all-skills.zip -d .claude/skills</code></pre>
+<p><a href="skills/all-skills.zip">Download all skills (zip)</a></p>
+
+<h2 id="workflow">A workflow that bends</h2>
+<p>This is the order we usually work in. Treat it as a suggestion. Skip a step, repeat one or change the order when the work needs it. The prompts are starting points, so change the wording until it sounds like you.</p>
+<p>Start with one choice. Use <a href=".claude/skills/govuk-html-prototype/SKILL.md"><code>govuk-html-prototype</code></a> for most things: workshops, concepts and testing an idea. It runs in any browser with nothing to install. Use <a href=".claude/skills/govuk-prototype/SKILL.md"><code>govuk-prototype</code></a>, the Prototype Kit, when a journey is going to developers as a spec. It needs Node.js.</p>
+
+<h3>Say what you are making</h3>
+<p>Name the service, who it is for and the need it meets. Name the skill too, so Claude does not guess.</p>
+<div class="prompt"><p class="cap">Prompt</p><pre>Prototype a service for reporting a change of address. Use govuk-html-prototype. List the screens and any branches before you build anything.</pre></div>
+<h3>Agree the screens</h3>
+<p>Claude lists the screens and branches before it builds. Change the list here, while changing it costs nothing.</p>
+<h3>Let it build</h3>
+<p>It starts from the template and copies markup from <code>components.html</code>, so you get GOV.UK components and no invented class names.</p>
+<div class="tip"><strong>Tip:</strong> ask for small changes one at a time and name the screen. "On the check your answers page, add a Change link to the date" gets a tighter result than "improve the journey".</div>
+<h3>Click through it</h3>
+<p>Open every screen from the "All screens" index and follow each branch and every Change link. Turn the design notes on to read the argument each screen makes.</p>
+<div class="prompt"><p class="cap">Prompt</p><pre>Add a branch for someone who has moved abroad. Say which screens it adds before you build them.</pre></div>
+<h3>Run the review</h3>
+<p><a href=".claude/skills/design-review/SKILL.md"><code>design-review</code></a> checks the journey, the Service Standard questions, the usability heuristics and WCAG 2.2 AA. It lists what fails and changes nothing until you ask.</p>
+<div class="prompt"><p class="cap">Prompt</p><pre>Run design-review on this prototype and list what fails. Don't fix anything yet.</pre></div>
+<h3>Add the messages</h3>
+<p>If the prototype sends anything to a person, use <a href=".claude/skills/government-communication/SKILL.md"><code>government-communication</code></a> to draft it and <a href=".claude/skills/privacy-aware-communications/SKILL.md"><code>privacy-aware-communications</code></a> to check what it reveals. <a href=".claude/skills/govuk-content/SKILL.md"><code>govuk-content</code></a> checks the wording against GOV.UK style.</p>
+<div class="prompt"><p class="cap">Prompt</p><pre>Draft the confirmation email for this journey with government-communication, then check what it reveals with privacy-aware-communications.</pre></div>
+<h3>Preview it</h3>
+<p>Ask for a preview as an Artifact. It opens as a private page you can read in Claude and share from there. A single HTML file also opens straight from your folder in any browser.</p>
+<div class="tip"><strong>When something comes out wrong,</strong> tell Claude which rule it broke. If our rules did not expect the problem, add the line that would have prevented it to <code>CLAUDE.md</code>. The team owns that file.</div>
+
+<h2 id="live">Push it and get a shareable link</h2>
+<p>This is the part that makes a prototype shareable, and it is the same routine every time. The work stays on your laptop until you push it.</p>
+<div class="step"><div class="n">01</div><div><h3>Commit your changes</h3><p>Open GitHub Desktop. Your changed files are listed on the left. Write a short summary of what changed in the box at the bottom left, then choose Commit to main. You can also ask Claude to commit this.</p><figure><img src="assets/guide/commit.svg" alt="Changed files on the left, the summary box and Commit to main below them."><figcaption>Changed files on the left, the summary box and Commit to main below them. Simplified illustration, not an exact screenshot.</figcaption></figure></div></div>
+<div class="step"><div class="n">02</div><div><h3>Push origin</h3><p>Press Push origin in the top bar. That sends your commit to GitHub.</p><figure><img src="assets/guide/push.svg" alt="The Push origin button in the top bar of GitHub Desktop."><figcaption>The Push origin button in the top bar of GitHub Desktop. Simplified illustration, not an exact screenshot.</figcaption></figure></div></div>
+<div class="step"><div class="n">03</div><div><h3>Wait a few minutes</h3><p>GitHub rebuilds the site after every push. If your link shows a not found page, wait a little and refresh.</p></div></div>
+<div class="step"><div class="n">04</div><div><h3>Open your live link</h3><p>The link is the site address, then your project folder, then your file name.</p><div class="prompt"><p class="cap">The link</p><pre>https://gds-dtx.github.io/cf-flat-experiments/your-project/your-file.html</pre></div><p>Send it to anyone who needs to click through. Anything on <code>main</code> is published, so check there is no real personal data in it first.</p></div></div>
+
+<h2 id="rules">What every prototype has</h2>
+<p>The skills build these in, so you rarely have to ask.</p>
+<ul class="ticks">
+<li><strong>The prototype warning and phase banner.</strong> Every screen says "Prototype: this is not a real service".</li>
+<li><strong>Design notes.</strong> Off by default. Each one states the argument the screen is making.</li>
+<li><strong>An "All screens" index.</strong> Any single screen opens directly in a workshop.</li>
+<li><strong>Invented details only.</strong> Dummy details that look real but are not. Never a real person, licence, NHS or National Insurance number.</li>
+<li><strong>WCAG 2.2 AA.</strong> Built from GOV.UK components, with a label on every input and everything working by keyboard.</li>
+</ul>
+<p><a class="btn" href="skills/all-skills.zip">Download all skills (zip)</a></p>
+</article></main>
+<footer><div class="in"><img src="assets/customerfirst-logo.png" alt="CustomerFirst"><p>Skills guide design and drafting. They flag legal, policy and privacy questions for the right person to answer, and never settle them. <a href="index.html">All skills</a></p></div></footer>
+</body>
+</html>
