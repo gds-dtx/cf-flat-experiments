@@ -18,6 +18,8 @@ a:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:
 .bar{background:var(--navy);padding-block:20px}
 .bar .in{max-width:1000px;margin:0 auto;padding-inline:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .bar img{display:block;height:30px;width:auto;max-width:100%}
+.logo{display:inline-block;line-height:0}
+.logo:hover img{opacity:.8}
 .bar a.back{color:#A6CAED;font-size:15px}
 .bar a.back:hover{color:var(--cyan)}
 article{max-width:700px;margin:0 auto;padding:clamp(40px,7vw,72px) 20px 40px}
@@ -59,7 +61,7 @@ footer a{color:#fff}
 </head>
 <body>
 <a class="skip" href="#main">Skip to main content</a>
-<div class="bar"><div class="in"><a href="index.html"><img src="assets/customerfirst-logo.png" alt="CustomerFirst"></a><a class="back" href="index.html">All skills</a></div></div>
+<div class="bar"><div class="in"><a class="logo" href="index.html"><img src="assets/customerfirst-logo.png" alt="CustomerFirst home"></a><a class="back" href="index.html">All skills</a></div></div>
 <main id="main"><article>
 <h1>How we prototype</h1>
 <p class="stand">Build a prototype by talking to Claude in a folder on your laptop. Push it with GitHub Desktop and you get a live link to send to anyone. This walk-through covers the one-off setup, the workflow we follow and how to publish.</p>
@@ -120,6 +122,6 @@ footer a{color:#fff}
 </ul>
 <p><a class="btn" href="skills/all-skills.zip">Download all skills (zip)</a></p>
 </article></main>
-<footer><div class="in"><img src="assets/customerfirst-logo.png" alt="CustomerFirst"><p>Skills guide design and drafting. They flag legal, policy and privacy questions for the right person to answer, and never settle them. <a href="index.html">All skills</a></p></div></footer>
+<footer><div class="in"><a class="logo" href="index.html"><img src="assets/customerfirst-logo.png" alt="CustomerFirst home"></a><p>Skills guide design and drafting. They flag legal, policy and privacy questions for the right person to answer, and never settle them. <a href="index.html">All skills</a></p></div></footer>
 </body>
 </html>
