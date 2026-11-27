@@ -1023,6 +1023,151 @@ Object.assign(RENDER, {
 });
 
 /* ---------------------------------------------------------------- */
+/* DVLA STAFF SCREENS. A neutral view, not styled as the real        */
+/* case management system. Labels here are prototype labels.        */
+/* ---------------------------------------------------------------- */
+const PRE_EVIDENCE = {
+  issue:{ label:'Issue a licence', route:'issue' },
+  refuse:{ label:'Refuse or revoke the licence', route:null },
+  report:{ label:'Ask a healthcare professional for a full report', route:null },
+  doctor:{ label:'Refer to a DVLA doctor', route:'clinicalJudgement' },
+  skipped:{ label:'Not recorded (skipped in the workshop)', route:null }
+};
+
+function savePreEvidence(e){
+  e.preventDefault();
+  const picked = e.target.querySelector('input[name="pre"]:checked');
+  if(!picked){ state.errors = [{ field:'pre-issue', text:'Select what you would decide without this evidence' }]; route(); return; }
+  state.caseOutcome.preEvidenceView = picked.value;
+  route();
+}
+function skipPreEvidence(){ state.caseOutcome.preEvidenceView = 'skipped'; route(); }
+
+function renderCase(){
+  const co = state.caseOutcome;
+  const head = '<span class="govuk-caption">Case '+esc(REQUEST.reference)+' · epilepsy</span>'
+    + '<h1 class="govuk-heading-l">'+esc(state.patient.name)+', born '+esc(state.patient.dob)+'</h1>';
+
+  const staffNote = note('The gateway metric',
+    '<p>“What would you decide without this evidence?” is asked before the caseworker sees the healthcare professional’s response. Asked afterwards, the answer is anchored by what they’ve just read and the measure is worthless.</p>'
+    +'<p>Across many cases, how often the pre-evidence view matches the final outcome tells us which evidence requests change decisions, and which only add weeks to the wait. That is the case for asking less.</p>'
+    + openQ('Keya, policy','does deciding on the declaration plus a confirmation need any change to policy or guidance?'));
+
+  // Step 1: the caseworker records a view from the declaration alone.
+  if(!co.preEvidenceView){
+    const opt = k => '<div class="govuk-radios__item"><input class="govuk-radios__input" id="pre-'+k+'" name="pre" type="radio" value="'+k+'"><label class="govuk-label govuk-radios__label" for="pre-'+k+'">'+esc(PRE_EVIDENCE[k].label)+'</label></div>';
+    const decl = DECLARATION.map(d => summaryRow(esc(d.topic), esc(d.driverAnswer))).join('');
+    return head + errorSummary()
+      + '<h2 class="govuk-heading-m">What the driver told us</h2>'
+      + '<dl class="govuk-summary-list">'+decl+'</dl>'
+      + '<form onsubmit="savePreEvidence(event)" novalidate>'
+      + '<div class="'+groupClass('pre-issue')+'"><fieldset class="govuk-fieldset" aria-describedby="pre-hint">'
+      + '<legend class="govuk-fieldset__legend"><h2 class="govuk-heading-m" style="margin:0">What would you decide without this evidence?</h2></legend>'
+      + '<div class="govuk-hint" id="pre-hint">Answer from the driver’s declaration alone. You’ll see the healthcare professional’s response after you save.</div>'
+      + errorMsg('pre-issue')
+      + '<div class="govuk-radios">'+['issue','refuse','report','doctor'].map(opt).join('')+'</div>'
+      + '</fieldset></div>'
+      + '<div class="govuk-button-group"><button type="submit" class="govuk-button">Save and show the response</button>'
+      + '<a class="govuk-link" href="#" onclick="skipPreEvidence();return false;">Skip this for the workshop</a></div></form>'
+      + staffNote;
+  }
+
+  // Step 2: the evidence, side by side.
+  const routeInfo = ROUTES[co.route];
+  const fired = state.triggers.filter(t => t.fired);
+  let explain = '';
+  if(co.route === 'awaitingHcp'){
+    explain = '<p>We sent the request to '+esc(REQUEST.practice)+' on '+esc(REQUEST.sent)+'. There is no reply yet. The case stays here until the healthcare professional replies, and the rules run again when they do.</p>';
+  } else {
+    explain = fired.length
+      ? '<p>Triggers that fired: '+fired.map(t => '<strong>'+t.id+'</strong> ('+esc(t.rule.toLowerCase())+')').join('; ')+'.</p>'
+      : '<p>No trigger fired. Every answer was confirmed and nothing needs a doctor’s judgement.</p>';
+    if(gapFlags().length) explain += '<p>A flag on '+gapFlags().map(r => esc(def(r.declarationId).topic.toLowerCase())).join(', ')+' has no draft rule. The prototype returns the case to the caseworker.</p>';
+    const ifConfirmed = routeFor(state.triggers.map(t => ({ id:t.id, fired: (t.id === 't3') ? false : t.fired })), false);
+    if(ifConfirmed !== co.route) explain += '<p>If every answer had been confirmed, the outcome would have been: '+esc(ROUTES[ifConfirmed].label)+'.</p>';
+    const last = resp('d-last');
+    if(last && last.confirmed === false && withinMonths(last.correction, 12)){
+      explain += '<p>Using the healthcare professional’s date ('+esc(formatDate(last.correction))+'), the most recent seizure was within the last 12 months. Had the driver given that date, trigger t1 would have applied and no request would have been sent.</p>';
+    }
+  }
+  const outcome = '<div class="govuk-notification-banner" role="region" aria-labelledby="nb-outcome"><div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title" id="nb-outcome">Rule outcome (draft rules)</h2></div>'
+    + '<div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">'+esc(routeInfo.label)+'</p>'+explain+'</div></div>';
+
+  const th = cells => '<thead><tr>'+cells.map(c => '<th scope="col">'+c+'</th>').join('')+'</tr></thead>';
+  let rows = '';
+  DECLARATION.forEach(d => {
+    const r = resp(d.id);
+    let hcp, status;
+    if(!r){ hcp = 'No response yet'; status = tag('Waiting','grey'); }
+    else if(r.confirmed){ hcp = 'Confirmed'; status = tag('Confirmed','green'); }
+    else { hcp = '<strong>Records show: '+esc(correctionText(d, r))+'</strong>'; status = tag('Flagged','red'); }
+    rows += '<tr><td><strong>'+esc(d.topic)+'</strong></td><td>'+esc(CATEGORIES[d.category])+'</td><td>'+esc(d.driverAnswer)+'</td><td>'+hcp+(r?'<br><span class="govuk-body-s">'+esc(r.respondedAt)+'</span>':'')+'</td><td>'+status+'</td></tr>';
+  });
+  const sc = state.screening;
+  const scText = sc == null ? 'No response yet' : (sc.length ? sc.map(id => esc(SCREENING.find(s => s.id === id).label)).join('<br>') : 'None of these');
+  rows += '<tr><td><strong>Anything needing a doctor’s judgement</strong></td><td>'+esc(CATEGORIES.judgement)+'</td><td>Not asked of the driver</td><td>'+scText+'</td><td>'
+    + (sc == null ? tag('Waiting','grey') : sc.length ? tag('Doctor needed','purple') : tag('None','green'))+'</td></tr>';
+  shownExtras().forEach(a => {
+    const q = extraDef(a.id);
+    const val = !a.answer ? 'No response yet' : q.type === 'yesno' ? (a.answer === 'yes' ? 'Yes: '+esc(a.detail) : 'No') : esc(a.answer);
+    rows += '<tr><td><strong>'+esc(q.question)+'</strong></td><td>'+esc(CATEGORIES.hcpProvides)+'</td><td>Not asked of the driver</td><td>'+val+'</td><td>'+tag('Provided','blue')+'</td></tr>';
+  });
+
+  const trigRows = state.triggers.map(t => '<tr><td><strong>'+t.id+'</strong></td><td>'+esc(t.rule)+'</td><td>'+(t.fired ? tag('Fired','red') : tag('Not fired','grey'))+'</td></tr>').join('');
+
+  const pre = PRE_EVIDENCE[co.preEvidenceView];
+  let match = '';
+  if(co.preEvidenceView !== 'skipped' && co.route !== 'awaitingHcp'){
+    match = pre.route === co.route ? 'The same as the rule outcome' : 'Different from the rule outcome';
+  }
+
+  return head + outcome
+    + '<h2 class="govuk-heading-m">The driver’s answers and the healthcare professional’s response</h2>'
+    + '<div style="overflow-x:auto"><table class="govuk-table">'+th(['Answer','Category (draft)','Driver said','Healthcare professional','Status'])+'<tbody>'+rows+'</tbody></table></div>'
+    + '<h2 class="govuk-heading-m">Triggers (draft)</h2>'
+    + '<table class="govuk-table">'+th(['','Trigger','This case'])+'<tbody>'+trigRows+'</tbody></table>'
+    + '<h2 class="govuk-heading-m">Your view before the evidence</h2>'
+    + '<dl class="govuk-summary-list">'
+    + summaryRow('Without the evidence you would have', esc(pre.label), '<a class="govuk-link" href="#" onclick="state.caseOutcome.preEvidenceView=\'\';route();return false;">Change<span class="govuk-visually-hidden"> your view before the evidence</span></a>')
+    + (match ? summaryRow('Compared with the rule outcome', esc(match)) : '')
+    + '</dl>'
+    + '<h2 class="govuk-heading-m">Verification</h2>'
+    + '<p class="govuk-body">'+(co.sampledForVerification ? 'This case was picked in the random verification sample.' : 'This case was not picked in the random verification sample.')+' <a class="govuk-link" href="#/verification">What verification involves</a></p>'
+    + staffNote
+    + note('Held as data, compared row by row',
+      '<p>The driver’s answer and the clinician’s response sit on the same row, so a contradiction is a visible difference, not something a caseworker spots in a scanned letter. The rule outcome says which rule produced it, so the caseworker can disagree with the rule rather than just the result.</p>');
+}
+
+function renderVerification(){
+  const co = state.caseOutcome;
+  return '<a href="#/case" class="govuk-back-link">Back to the case</a>'
+    + '<span class="govuk-caption">Case '+esc(REQUEST.reference)+'</span>'
+    + '<h1 class="govuk-heading-l">'+(co.sampledForVerification ? 'This case was picked for verification' : 'This case was not picked for verification')+'</h1>'
+    + (co.sampledForVerification
+      ? '<p class="govuk-body">Every declaration has the same chance of being picked, whatever the driver told us and whatever the healthcare professional said. Being picked does not hold up the decision.</p>'
+        + '<h2 class="govuk-heading-m">What checking involves</h2>'
+        + '<ol class="govuk-list govuk-list--number">'
+        + '<li>We ask '+esc(REQUEST.practice)+' for the relevant entries from '+esc(state.patient.name)+'’s records: diagnosis, seizure dates, medication changes and the latest specialist letter.</li>'
+        + '<li>A caseworker compares them with the driver’s declaration and the healthcare professional’s confirmation, answer by answer.</li>'
+        + '<li>We record whether each answer matched. The results tell us whether the declaration and the confirmation can be trusted, and for which questions.</li>'
+        + '</ol>'
+      : '<p class="govuk-body">The decision rests on the driver’s declaration and the healthcare professional’s confirmation. Every declaration has the same chance of being picked, so a case not being picked says nothing about it.</p>')
+    + '<dl class="govuk-summary-list">'
+    + summaryRow('Sample size','Not decided (draft)')
+    + summaryRow('If a checked answer turns out to be wrong','Not decided (draft)')
+    + '</dl>'
+    + note('Verification is what makes asking less defensible',
+      '<p>Deciding on a declaration and a confirmation is only safe if we know how often they are wrong. The random sample is the evidence for that, and the reason it can’t be targeted at cases that look risky.</p>'
+      + openQ('verification','what sample size? What happens to the licence when a declaration turns out to be wrong? What are drivers told about the check, and when?')
+      + '<p><a href="#" onclick="state.caseOutcome.sampledForVerification=!state.caseOutcome.sampledForVerification;route();return false;">Workshop: show the '+(co.sampledForVerification ? 'not picked' : 'picked')+' version</a></p>');
+}
+
+Object.assign(RENDER, {
+  'case':         { title:'Case view', fn:renderCase, wide:true, staff:true },
+  'verification': { title:'Verification', fn:renderVerification, staff:true }
+});
+
+/* ---------------------------------------------------------------- */
 /* CHROME AND ROUTER                                                 */
 /* ---------------------------------------------------------------- */
 function renderChrome(inner, screen){
