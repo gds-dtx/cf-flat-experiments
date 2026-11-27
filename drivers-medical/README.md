@@ -21,6 +21,21 @@ Prototypes and canvases from the DVLA Drivers Medical work. Nothing here is a re
 - [`Medical evidence service_ customer and healthcare professional journeys 2.5 (prototype).html`](https://gds-dtx.github.io/cf-flat-experiments/drivers-medical/prototypes/Medical%20evidence%20service_%20customer%20and%20healthcare%20professional%20journeys%202.5%20%28prototype%29.html): the medical evidence service, from both the customer and the healthcare professional side.
 - [`Medical evidence service for healthcare professionals (medportal prototype).html`](https://gds-dtx.github.io/cf-flat-experiments/drivers-medical/prototypes/Medical%20evidence%20service%20for%20healthcare%20professionals%20%28medportal%20prototype%29.html): the healthcare professional side of the medical evidence service on its own.
 - [`Medical portal_ customer and healthcare professional (prototype).html`](https://gds-dtx.github.io/cf-flat-experiments/drivers-medical/prototypes/Medical%20portal_%20customer%20and%20healthcare%20professional%20%28prototype%29.html): an earlier version of the medical portal, for customers and healthcare professionals.
+- [`hcp-confirm-epilepsy.html`](https://gds-dtx.github.io/cf-flat-experiments/drivers-medical/prototypes/hcp-confirm-epilepsy.html): the confirm-first model for collecting medical information from healthcare professionals, shown through epilepsy. See below.
+
+### HCP confirm-first: epilepsy
+
+A throwaway conversation piece for DVLA's doctors, not a step towards production. Its job is to make doctors react to the rules, not the interface.
+
+The model: the driver declares first, a healthcare professional checks the driver's answers against their records rather than writing a report, and a clinician answers extra questions only when a defined risk indicator is present. DVLA checks a random sample of declarations. Every screen shows why a question is, or isn't, being asked of the healthcare professional. The "Rules" page sorts each question by who answers it and what moves it up a step. It is a **draft** from epilepsy operating instructions dated 2017 and November 2022 that may not be current, and it has not been clinically reviewed.
+
+Three scenarios, started from the index, all from the same driver declaration:
+
+1. **Confirms cleanly.** The records match and the healthcare professional confirms everything.
+2. **Contradiction.** The records show a later most recent seizure. The healthcare professional flags it, and the case returns to the caseworker.
+3. **Trigger fires.** The records show seizures that affect awareness. Clinician-only questions appear and the case goes to a DVLA doctor.
+
+Open questions, each on the screens it affects: whether the question sort and triggers are right (clinical); GP or consultant; a link in the practice inbox versus a portal; individual or practice sign-in; whether a confirmation is paid at the same rate as a report; whether confirming carries different professional responsibility from reporting; whether deciding on a declaration plus a confirmation needs a policy change; and the verification sample size, what happens when a declaration is wrong, and what drivers are told.
 
 ## `staying-informed/`
 
