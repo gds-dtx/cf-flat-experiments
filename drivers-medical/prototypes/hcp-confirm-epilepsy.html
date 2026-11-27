@@ -236,57 +236,57 @@ const HCP = { name:'Dr Priya Ansell', role:'GP', email:'priya.ansell@example.com
 const DECLARATION = [
   { id:'c-diagnosis', topic:'Diagnosis', category:'hcpConfirms',
     question:'What condition have you been told you have?',
-    hcpQuestion:'Is your patient’s diagnosis epilepsy?',
+    hcpQuestion:'Is it correct that your patient’s diagnosis is epilepsy?',
     driverAnswer:'Epilepsy', correction:'text',
     correctionLabel:'What diagnosis do your records show?',
     correctionHint:'For example, a first unprovoked seizure or a provoked seizure.',
     why:'We ask a clinician to confirm the diagnosis because it decides which rules apply to your patient.' },
   { id:'d-history', topic:'Number of seizures', category:'driverTells',
     question:'Have you had a seizure, and was it a first seizure or more than one?',
-    hcpQuestion:'Has your patient had more than one seizure?',
+    hcpQuestion:'Is it correct that your patient has had more than one seizure?',
     driverAnswer:'Yes, more than one seizure', driverValue:'more', correction:'text',
     correctionLabel:'What do your records show?',
     why:'Your patient told us this. We only need you to check it against your records.' },
   { id:'d-first', topic:'First seizure', category:'driverTells',
     question:'When was your first seizure?',
-    hcpQuestion:'Was your patient’s first seizure on 12 March 2019?',
+    hcpQuestion:'Is it correct that your patient’s first seizure was on 12 March 2019?',
     driverAnswer:'12 March 2019', driverDate:'2019-03-12', correction:'date',
     correctionLabel:'What date do your records show for the first seizure?',
     why:'Your patient told us this date. We only need you to check it against your records.' },
   { id:'d-last', topic:'Most recent seizure', category:'driverTells',
     question:'When was your most recent seizure?',
-    hcpQuestion:'Was your patient’s most recent seizure on 4 February 2025?',
+    hcpQuestion:'Is it correct that your patient’s most recent seizure was on 4 February 2025?',
     driverAnswer:'4 February 2025', driverDate:'2025-02-04', correction:'date',
     correctionLabel:'What date do your records show for the most recent seizure?',
     why:'Your patient told us this date. It matters most of all the dates, so please check it against the latest letters in your records.' },
   { id:'d-five', topic:'Seizures in the last 5 years', category:'driverTells',
     question:'Have you had 2 or more seizures in the last 5 years?',
-    hcpQuestion:'Has your patient had 2 or more seizures in the last 5 years?',
+    hcpQuestion:'Is it correct that your patient has had 2 or more seizures in the last 5 years?',
     driverAnswer:'Yes', correction:'text',
     correctionLabel:'What do your records show?',
     why:'Your patient told us this. We only need you to check it against your records.' },
   { id:'d-awake', topic:'Awake or asleep', category:'driverTells',
     question:'Do your seizures happen while you’re awake, asleep, or both?',
-    hcpQuestion:'Do your patient’s seizures happen while they’re awake?',
-    driverAnswer:'While awake', driverValue:'awake', correction:'text',
+    hcpQuestion:'Is it correct that your patient’s seizures happen only while they’re awake?',
+    driverAnswer:'Only while awake', driverValue:'awake', correction:'text',
     correctionLabel:'What do your records show?',
     correctionHint:'For example, only while asleep, or both awake and asleep.',
     why:'Your patient told us this. We only need you to check it against your records.' },
   { id:'d-medication', topic:'Change to medication', category:'hcpConfirms',
     question:'Has a doctor changed or stopped your epilepsy medication? When?',
-    hcpQuestion:'Did a doctor reduce your patient’s epilepsy medication on 10 March 2025?',
+    hcpQuestion:'Is it correct that a doctor reduced your patient’s epilepsy medication on 10 March 2025?',
     driverAnswer:'Yes. A doctor reduced the dose on 10 March 2025.', correction:'text',
     correctionLabel:'What do your records show about the change, and its date?',
     why:'We ask a clinician to confirm that a doctor directed this change, and when. A change made without medical advice is treated differently.' },
   { id:'c-alcohol', topic:'Alcohol or drugs', category:'hcpConfirms',
     question:'Were any of your seizures related to alcohol or drugs?',
-    hcpQuestion:'Were your patient’s seizures unrelated to alcohol or drugs?',
+    hcpQuestion:'Is it correct that none of your patient’s seizures were related to alcohol or drugs?',
     driverAnswer:'No, not related to alcohol or drugs', correction:'text',
     correctionLabel:'What do your records show?',
     why:'We ask a clinician to confirm this because alcohol or drug use would change which rules apply.' },
   { id:'d-lastseen', topic:'Last appointment', category:'driverTells',
     question:'Who did you last see about your epilepsy, and when?',
-    hcpQuestion:'Did your patient last see a neurologist about their epilepsy on 2 October 2026?',
+    hcpQuestion:'Is it correct that your patient last saw a neurologist about their epilepsy on 2 October 2026?',
     driverAnswer:'Dr Tomas Reyes, neurologist at Northgate Hospital, on 2 October 2026', correction:'text',
     correctionLabel:'What do your records show?',
     why:'Your patient told us this. We only need you to check it against your records. It tells us whose letters to look for.' }
@@ -613,6 +613,414 @@ const RENDER = {
   'all-screens': { title:'All screens', fn:renderAllScreens, wide:true },
   'rules':       { title:'How this form was built', fn:renderRules, wide:true }
 };
+
+/* ---------------------------------------------------------------- */
+/* HEALTHCARE PROFESSIONAL SCREENS                                   */
+/* ---------------------------------------------------------------- */
+function summaryRow(key, value, action){
+  return '<div class="govuk-summary-list__row"><dt class="govuk-summary-list__key">'+key+'</dt>'
+    +'<dd class="govuk-summary-list__value">'+value+'</dd>'
+    +(action ? '<dd class="govuk-summary-list__actions">'+action+'</dd>' : '')+'</div>';
+}
+function recordDetails(text){
+  return '<details class="govuk-details"><summary class="govuk-details__summary"><span class="govuk-details__summary-text">Practice record (simulated, scenario '+state.scenario+')</span></summary>'
+    +'<div class="govuk-details__text">'+esc(text)+'</div></details>';
+}
+function signOut(){ state.signedIn = false; go('sign-in'); }
+
+/* Arrival: the request lands where the paper letter lands today. */
+function renderArrival(){
+  return '<span class="govuk-caption">Simulated: your practice’s shared inbox</span>'
+    + '<h1 class="govuk-heading-l">New request from DVLA</h1>'
+    + '<dl class="govuk-summary-list">'
+    + summaryRow('From','DVLA Drivers Medical')
+    + summaryRow('To', esc(REQUEST.inbox))
+    + summaryRow('Received', esc(REQUEST.sent))
+    + summaryRow('Subject','DVLA request to check a patient’s information, reference '+esc(REQUEST.reference))
+    + '</dl>'
+    + '<div class="govuk-inset-text">'
+    + '<p class="govuk-body">Dear colleague,</p>'
+    + '<p class="govuk-body">One of your patients has told DVLA about a medical condition. We’d like a clinician to check what they told us against your records. For most patients this takes a few minutes.</p>'
+    + '<p class="govuk-body">We’ll pay for this in the same way we pay for medical reports today.</p>'
+    + '<p class="govuk-body"><a class="govuk-link" href="#/sign-in">Open the request</a></p>'
+    + '<p class="govuk-body">Reference: '+esc(REQUEST.reference)+'</p>'
+    + '</div>'
+    + hcpNote('The request comes to them',
+      '<p>Today the request arrives as a paper letter. This puts a link where that letter would land, in the practice’s existing inbox or document workflow, rather than in a portal someone has to remember to visit.</p>'
+      +'<p>The message names no patient and no condition. Anyone who processes the practice inbox can see it.</p>'
+      + openQ('workflow','a link in the practice’s inbox versus a portal. Test with practices in slice 0. Which inbox, and does a link survive the practice’s document workflow?')
+      + openQ('which professional','GP or consultant for epilepsy? Which of them holds the records the confirm step needs?'));
+}
+
+/* Sign in. Simulated: the fields are pre-filled and read-only. */
+function renderSignIn(){
+  return '<a href="#/arrival" class="govuk-back-link">Back</a>'
+    + '<h1 class="govuk-heading-l">Sign in</h1>'
+    + '<div class="govuk-inset-text">This sign-in is simulated. The details are invented and filled in for you. Do not type a real password.</div>'
+    + '<form onsubmit="saveSignIn(event)" novalidate>'
+    + '<div class="govuk-form-group"><label class="govuk-label" for="email">Email address</label>'
+    + '<input class="govuk-input govuk-input--width-20" id="email" name="email" type="email" value="'+esc(HCP.email)+'" readonly autocomplete="off" spellcheck="false"></div>'
+    + '<div class="govuk-form-group"><label class="govuk-label" for="password">Password</label>'
+    + '<input class="govuk-input govuk-input--width-20" id="password" name="password" type="password" value="prototype" readonly autocomplete="off"></div>'
+    + '<button type="submit" class="govuk-button">Sign in</button></form>'
+    + hcpNote('Who is answering',
+      '<p>Confirming a patient’s answers is a clinical statement, so DVLA needs to know which clinician made it. Signing in once per request is friction a busy practice will notice. Watch for it.</p>'
+      + openQ('sign-in','an individual clinician account or a practice account? An individual account says who confirmed; a practice account is easier to share among locums and admin staff.'));
+}
+function saveSignIn(e){ e.preventDefault(); state.signedIn = true; go('access'); }
+
+/* Access: the reference from the request plus the practice. */
+function renderAccess(){
+  return '<a href="#/sign-in" class="govuk-back-link">Back</a>'
+    + '<h1 class="govuk-heading-l">Check this request is for your practice</h1>'
+    + '<dl class="govuk-summary-list">'
+    + summaryRow('Reference', esc(REQUEST.reference))
+    + summaryRow('Practice', esc(REQUEST.practice)+' (example practice)')
+    + summaryRow('Signed in as', esc(HCP.name)+', '+esc(HCP.role))
+    + '</dl>'
+    + '<button class="govuk-button" onclick="go(\'patient\')">Continue as '+esc(REQUEST.practice)+'</button>'
+    + '<p class="govuk-body"><a class="govuk-link" href="#/wrong-practice">This request is not for our practice</a></p>'
+    + hcpNote('The link carries the request',
+      '<p>The reference in the link ties this sign-in to one request and one practice. Nobody types a reference or searches for a patient.</p>');
+}
+function renderWrongPractice(){
+  return '<a href="#/access" class="govuk-back-link">Back</a>'
+    + '<h1 class="govuk-heading-l">We’ve been told this request is not for your practice</h1>'
+    + '<p class="govuk-body">You do not need to do anything else. We’ll ask your patient which practice holds their records, and send the request there.</p>'
+    + '<p class="govuk-body">Your patient’s case will take longer while we do this.</p>'
+    + hcpNote('A wrong practice is a delay, not a dead end',
+      '<p>The person who pays for this mistake is the driver, who is waiting. Say plainly that it adds time.</p>');
+}
+
+/* Patient and request */
+function renderPatient(){
+  return '<a href="#/access" class="govuk-back-link">Back</a>'
+    + '<span class="govuk-caption">Reference '+esc(REQUEST.reference)+'</span>'
+    + '<h1 class="govuk-heading-l">Check this is your patient</h1>'
+    + '<dl class="govuk-summary-list">'
+    + summaryRow('Name', esc(state.patient.name))
+    + summaryRow('Date of birth', esc(state.patient.dob))
+    + '</dl>'
+    + '<p class="govuk-body">Your patient has told DVLA about their epilepsy. We’d like you to check what they told us.</p>'
+    + '<p class="govuk-body">You’ll see '+DECLARATION.length+' of their answers, one at a time. For each one, tell us whether it matches your records. Then we’ll ask whether their records show anything a DVLA doctor needs to look at.</p>'
+    + '<p class="govuk-body">We’ll only ask you to write anything if your records are different, or if something needs a doctor’s judgement.</p>'
+    + '<button class="govuk-button" onclick="go(\'confirm/'+DECLARATION[0].id+'\')">Continue</button>'
+    + '<p class="govuk-body"><a class="govuk-link" href="#/not-patient">This is not our patient</a></p>'
+    + hcpNote('Check, not tell',
+      '<p>The first thing the clinician learns is the size of the job: check answers, not write a report. That is the whole bet of the model. If it still feels like a report, it will be treated like one.</p>'
+      + openQ('which professional','would a GP be able to confirm every one of these from their records, or only from a consultant’s letters?'));
+}
+function renderNotPatient(){
+  return '<a href="#/patient" class="govuk-back-link">Back</a>'
+    + '<h1 class="govuk-heading-l">We’ve been told '+esc(state.patient.name)+' is not your patient</h1>'
+    + '<p class="govuk-body">You do not need to do anything else. We’ll ask your patient which practice holds their records, and send the request there.</p>'
+    + '<p class="govuk-body">Your patient’s case will take longer while we do this.</p>';
+}
+
+/* What your patient told us: one answer per page. */
+function renderConfirm(id){
+  const d = def(id);
+  if(!d) return renderAllScreens();
+  const key = 'confirm/'+id;
+  const i = DECLARATION.indexOf(d);
+  const r = resp(id);
+  const f = state.form;
+  const val = f.answer != null ? f.answer : (r ? (r.confirmed ? 'yes' : 'no') : '');
+  const corr = f.correction != null ? f.correction : (r && r.confirmed === false ? r.correction : '');
+  const dateParts = f.day != null ? f : (r && r.confirmed === false && d.correction === 'date' ? (([y,m,dd]) => ({year:y, month:String(Number(m)), day:String(Number(dd))}))(r.correction.split('-')) : {day:'',month:'',year:''});
+
+  let correctionField;
+  if(d.correction === 'date'){
+    correctionField = '<div class="'+groupClass('correction-day')+'"><fieldset class="govuk-fieldset" role="group" aria-describedby="correction-hint">'
+      + '<legend class="govuk-fieldset__legend">'+esc(d.correctionLabel)+'</legend>'
+      + '<div class="govuk-hint" id="correction-hint">For example, 18 9 2026</div>'
+      + errorMsg('correction-day')
+      + '<div class="govuk-date-input">'
+      + ['day','month','year'].map(p => '<div class="govuk-date-input__item"><label class="govuk-date-input__label" for="correction-'+p+'">'+p[0].toUpperCase()+p.slice(1)+'</label>'
+        + '<input class="govuk-input govuk-input--width-'+(p==='year'?'4':'2')+(errFor('correction-day')?' govuk-input--error':'')+'" id="correction-'+p+'" name="'+p+'" type="text" inputmode="numeric" value="'+esc(dateParts[p])+'"></div>').join('')
+      + '</div></fieldset></div>';
+  } else {
+    correctionField = '<div class="'+groupClass('correction')+'"><label class="govuk-label" for="correction">'+esc(d.correctionLabel)+'</label>'
+      + (d.correctionHint ? '<div class="govuk-hint" id="correction-hint">'+esc(d.correctionHint)+'</div>' : '')
+      + errorMsg('correction')
+      + '<textarea class="govuk-textarea'+(errFor('correction')?' govuk-textarea--error':'')+'" id="correction" name="correction" rows="3"'+(d.correctionHint?' aria-describedby="correction-hint"':'')+'>'+esc(corr)+'</textarea></div>';
+  }
+
+  const record = SCENARIOS[state.scenario].record[id] || 'Matches what your patient told us.';
+  return backLink(key)
+    + errorSummary()
+    + '<form onsubmit="saveConfirm(event,\''+id+'\')" novalidate>'
+    + '<div class="'+groupClass('answer-yes')+'"><fieldset class="govuk-fieldset" aria-describedby="why-'+id+'">'
+    + '<legend class="govuk-fieldset__legend govuk-fieldset__legend--l"><span class="govuk-caption">What your patient told us, '+(i+1)+' of '+DECLARATION.length+'</span>'
+    + '<h1 class="govuk-fieldset__heading">'+esc(d.hcpQuestion)+'</h1></legend>'
+    + '<div class="govuk-hint" id="why-'+id+'">'+esc(d.why)+'</div>'
+    + errorMsg('answer-yes')
+    + '<div class="govuk-radios">'
+    + '<div class="govuk-radios__item"><input class="govuk-radios__input" id="answer-yes" name="answer" type="radio" value="yes"'+(val==='yes'?' checked':'')+' onchange="revealCorrection()"><label class="govuk-label govuk-radios__label" for="answer-yes">Correct</label></div>'
+    + '<div class="govuk-radios__item"><input class="govuk-radios__input" id="answer-no" name="answer" type="radio" value="no"'+(val==='no'?' checked':'')+' onchange="revealCorrection()" aria-controls="conditional-no"><label class="govuk-label govuk-radios__label" for="answer-no">Not correct, or not what our notes say</label></div>'
+    + '<div class="govuk-radios__conditional" id="conditional-no"'+(val==='no'?'':' hidden')+'>'+correctionField+'</div>'
+    + '</div></fieldset></div>'
+    + recordDetails(record)
+    + '<button type="submit" class="govuk-button">Continue</button></form>'
+    + hcpNote(d.category === 'driverTells' ? 'The driver tells us. The clinician checks.' : 'The clinician confirms',
+      (d.category === 'driverTells'
+        ? '<p>This is the driver’s fact, not the clinician’s. The clinician’s job is to say whether their records agree, which is one click when they do.</p>'
+        : '<p>The draft puts this in “the healthcare professional confirms”: the driver’s answer alone isn’t enough, but a clinician agreeing with it is. It is still a confirmation, not a report.</p>')
+      + (DATE_OR_DIAGNOSIS.includes(id)
+        ? '<p>If this is flagged, the case goes back to the caseworker (trigger t3).</p>'
+        : '<p>The draft has no rule for a flag on this answer. The prototype sends the case back to the caseworker. That gap is on the rules page.</p>')
+      + openQ('Dr Nas, DVLA doctors','is this item safe to confirm rather than report?')
+      + (i === 0 ? openQ('liability','does confirming a patient’s answers carry different professional responsibility from writing a report?') : ''));
+}
+function revealCorrection(){
+  const no = document.getElementById('answer-no');
+  const c = document.getElementById('conditional-no');
+  if(c) c.hidden = !(no && no.checked);
+}
+function saveConfirm(e, id){
+  e.preventDefault();
+  const d = def(id);
+  const form = e.target;
+  const picked = form.querySelector('input[name="answer"]:checked');
+  const errors = [];
+  const f = { answer: picked ? picked.value : '' };
+  let correction = '';
+  if(!picked){
+    errors.push({ field:'answer-yes', text:'Select whether this is correct' });
+  } else if(picked.value === 'no'){
+    if(d.correction === 'date'){
+      f.day = form.day.value.trim(); f.month = form.month.value.trim(); f.year = form.year.value.trim();
+      if(!f.day && !f.month && !f.year){
+        errors.push({ field:'correction-day', text:'Enter the date your records show' });
+      } else {
+        const dd = Number(f.day), mm = Number(f.month), yy = Number(f.year);
+        const dt = new Date(yy, mm-1, dd);
+        const real = /^\d{1,2}$/.test(f.day) && /^\d{1,2}$/.test(f.month) && /^\d{4}$/.test(f.year) && dt.getFullYear()===yy && dt.getMonth()===mm-1 && dt.getDate()===dd;
+        if(!real){
+          errors.push({ field:'correction-day', text:'Date must be a real date' });
+        } else {
+          correction = yy+'-'+String(mm).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
+          if(correction > TODAY) errors.push({ field:'correction-day', text:'Date must be today or in the past' });
+        }
+      }
+    } else {
+      f.correction = form.correction.value;
+      correction = f.correction.trim();
+      if(!correction) errors.push({ field:'correction', text:'Enter what your records show' });
+    }
+  }
+  if(errors.length){ state.errors = errors; state.form = f; route(); return; }
+  state.hcpResponse = state.hcpResponse.filter(r => r.declarationId !== id);
+  state.hcpResponse.push({ declarationId:id, confirmed: picked.value === 'yes', correction: picked.value === 'yes' ? '' : correction, respondedAt: nowStamp() });
+  evaluate();
+  go(nextAfter('confirm/'+id));
+}
+
+/* Clinical judgement: one question, never answered by a rule. */
+function renderScreening(){
+  const f = state.form;
+  const sel = f.screening || state.screening || [];
+  const box = (id, label) => '<div class="govuk-checkboxes__item"><input class="govuk-checkboxes__input" id="screen-'+id+'" name="screening" type="checkbox" value="'+id+'"'+(sel.includes(id)?' checked':'')+'><label class="govuk-label govuk-checkboxes__label" for="screen-'+id+'">'+esc(label)+'</label></div>';
+  const record = SCENARIOS[state.scenario].screeningNote || 'Nothing in the record shows any of these.';
+  return backLink('screening')
+    + errorSummary()
+    + '<form onsubmit="saveScreening(event)" novalidate>'
+    + '<div class="'+groupClass('screen-awareness')+'"><fieldset class="govuk-fieldset" aria-describedby="screening-hint">'
+    + '<legend class="govuk-fieldset__legend govuk-fieldset__legend--l"><h1 class="govuk-fieldset__heading">Do your patient’s records show any of these?</h1></legend>'
+    + '<div class="govuk-hint" id="screening-hint">Select all that apply. We don’t ask your patient about these, because a DVLA doctor needs a clinician’s view. If any apply, we’ll ask you a few more questions.</div>'
+    + errorMsg('screen-awareness')
+    + '<div class="govuk-checkboxes">'
+    + SCREENING.map(s => box(s.id, s.label)).join('')
+    + '<p class="govuk-checkboxes__divider">or</p>'
+    + box('none','None of these')
+    + '</div></fieldset></div>'
+    + recordDetails(record)
+    + '<button type="submit" class="govuk-button">Continue</button></form>'
+    + hcpNote('The only question that can make this longer',
+      '<p>These are the clinical judgement items in the draft. A rule never answers them. Any one of them sends the case to a DVLA doctor and opens the questions only a clinician can answer.</p>'
+      +'<p>Asking it as one question keeps the clean case short: most clinicians tick “None of these” and move on.</p>'
+      + openQ('Dr Nas, DVLA doctors','are these the right triggers? Is anything missing that would make you want a full report?'));
+}
+function saveScreening(e){
+  e.preventDefault();
+  const picked = Array.from(e.target.querySelectorAll('input[name="screening"]:checked')).map(i => i.value);
+  let error = '';
+  if(!picked.length) error = 'Select which of these your patient’s records show, or select “None of these”';
+  else if(picked.includes('none') && picked.length > 1) error = 'Select “None of these” on its own, or select the ones that apply';
+  if(error){ state.errors = [{ field:'screen-awareness', text:error }]; state.form = { screening:picked }; route(); return; }
+  state.screening = picked.filter(p => p !== 'none');
+  evaluate();
+  go(nextAfter('screening'));
+}
+
+/* Step 3: questions only a clinician can answer. */
+const EXTRA_ERRORS = {
+  'eq-awareness':'Describe how your patient’s seizures affect them',
+  'eq-risk':'Select yes if any clinical factors or results suggest a higher risk',
+  'eq-provoked':'Describe the circumstances and what provoked the seizure'
+};
+function renderExtra(id){
+  const q = extraDef(id), a = extra(id);
+  if(!q) return renderAllScreens();
+  const key = 'extra/'+id;
+  const f = state.form;
+  const shown = extraShown(a);
+  const intro = '<div class="govuk-inset-text">Why we’re asking: '+esc(q.why)+'</div>';
+  const notShown = shown ? '' : '<div class="govuk-notification-banner" role="region" aria-labelledby="nb-extra"><div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title" id="nb-extra">Prototype</h2></div><div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">No trigger has fired, so a healthcare professional would not see this question.</p><p>It appears when '+q.triggers.join(' or ')+' fires. Run scenario 3 to see it in the journey.</p></div></div>';
+  const noteHtml = hcpNote('Each question says why it is being asked',
+    '<p>The clinician only sees this page because of something they told us. Saying so turns an extra question from a demand into a consequence they can follow.</p>'
+    + openQ('Dr Nas, DVLA doctors','is this the right question to ask a clinician here, or should this be a full report?')
+    + openQ('fee','is a confirmation with extra questions paid at the same rate as a report from records (£50 today)?'));
+  let body;
+  if(q.type === 'yesno'){
+    const val = f.answer != null ? f.answer : a.answer;
+    const det = f.detail != null ? f.detail : a.detail;
+    body = '<form onsubmit="saveExtra(event,\''+id+'\')" novalidate>'
+      + '<div class="'+groupClass('answer-yes')+'"><fieldset class="govuk-fieldset" aria-describedby="extra-hint">'
+      + '<legend class="govuk-fieldset__legend govuk-fieldset__legend--l"><span class="govuk-caption">A question only you can answer</span><h1 class="govuk-fieldset__heading">'+esc(q.question)+'</h1></legend>'
+      + intro
+      + '<div class="govuk-hint" id="extra-hint">'+esc(q.hint)+'</div>'
+      + errorMsg('answer-yes')
+      + '<div class="govuk-radios">'
+      + '<div class="govuk-radios__item"><input class="govuk-radios__input" id="answer-yes" name="answer" type="radio" value="yes"'+(val==='yes'?' checked':'')+' onchange="revealDetail()" aria-controls="conditional-yes"><label class="govuk-label govuk-radios__label" for="answer-yes">Yes</label></div>'
+      + '<div class="govuk-radios__conditional" id="conditional-yes"'+(val==='yes'?'':' hidden')+'><div class="'+groupClass('detail')+'"><label class="govuk-label" for="detail">'+esc(q.detailLabel)+'</label>'+errorMsg('detail')+'<textarea class="govuk-textarea'+(errFor('detail')?' govuk-textarea--error':'')+'" id="detail" name="detail" rows="4">'+esc(det)+'</textarea></div></div>'
+      + '<div class="govuk-radios__item"><input class="govuk-radios__input" id="answer-no" name="answer" type="radio" value="no"'+(val==='no'?' checked':'')+' onchange="revealDetail()"><label class="govuk-label govuk-radios__label" for="answer-no">No</label></div>'
+      + '</div></fieldset></div>'
+      + '<button type="submit" class="govuk-button">Continue</button></form>';
+  } else {
+    const val = f.answer != null ? f.answer : a.answer;
+    body = '<form onsubmit="saveExtra(event,\''+id+'\')" novalidate>'
+      + '<span class="govuk-caption">A question only you can answer</span>'
+      + '<div class="'+groupClass('answer')+'"><h1 class="govuk-heading-l"><label for="answer">'+esc(q.question)+'</label></h1>'
+      + intro
+      + '<div class="govuk-hint" id="answer-hint">'+esc(q.hint)+'</div>'
+      + errorMsg('answer')
+      + '<textarea class="govuk-textarea'+(errFor('answer')?' govuk-textarea--error':'')+'" id="answer" name="answer" rows="5" aria-describedby="answer-hint">'+esc(val)+'</textarea></div>'
+      + '<button type="submit" class="govuk-button">Continue</button></form>';
+  }
+  return backLink(key) + notShown + errorSummary() + body + noteHtml;
+}
+function revealDetail(){
+  const yes = document.getElementById('answer-yes');
+  const c = document.getElementById('conditional-yes');
+  if(c) c.hidden = !(yes && yes.checked);
+}
+function saveExtra(e, id){
+  e.preventDefault();
+  const q = extraDef(id), a = extra(id);
+  const form = e.target;
+  if(q.type === 'yesno'){
+    const picked = form.querySelector('input[name="answer"]:checked');
+    const detail = form.detail.value;
+    const errors = [];
+    if(!picked) errors.push({ field:'answer-yes', text:EXTRA_ERRORS[id] });
+    else if(picked.value === 'yes' && !detail.trim()) errors.push({ field:'detail', text:'Give details of the clinical factors or results' });
+    if(errors.length){ state.errors = errors; state.form = { answer: picked ? picked.value : '', detail }; route(); return; }
+    a.answer = picked.value; a.detail = picked.value === 'yes' ? detail.trim() : '';
+  } else {
+    const val = form.answer.value;
+    if(!val.trim()){ state.errors = [{ field:'answer', text:EXTRA_ERRORS[id] }]; state.form = { answer:val }; route(); return; }
+    a.answer = val.trim();
+  }
+  go(nextAfter('extra/'+id));
+}
+
+/* Check your answers */
+function renderCheck(){
+  const change = (key, what) => '<a class="govuk-link" href="#/'+key+'" onclick="changeTo(\''+key+'\');return false;">Change<span class="govuk-visually-hidden"> '+esc(what)+'</span></a>';
+  let told = '';
+  DECLARATION.forEach(d => {
+    const r = resp(d.id);
+    let value;
+    if(!r) value = '<strong>Not answered yet</strong>';
+    else if(r.confirmed) value = 'Correct: '+esc(d.driverAnswer);
+    else value = '<strong>Not correct.</strong> Your records show: '+esc(correctionText(d, r))+'<br><span class="govuk-body-s">Your patient told us: '+esc(d.driverAnswer)+'</span>';
+    told += summaryRow(esc(d.topic), value, change('confirm/'+d.id, d.topic.toLowerCase()));
+  });
+  const sc = state.screening;
+  const scValue = sc == null ? '<strong>Not answered yet</strong>'
+    : (sc.length ? '<ul class="govuk-list">'+sc.map(id => '<li>'+esc(SCREENING.find(s => s.id === id).label)+'</li>').join('')+'</ul>' : 'None of these');
+  let extras = '';
+  shownExtras().forEach(a => {
+    const q = extraDef(a.id);
+    let value = !a.answer ? '<strong>Not answered yet</strong>'
+      : q.type === 'yesno' ? (a.answer === 'yes' ? 'Yes: '+esc(a.detail) : 'No') : esc(a.answer);
+    extras += summaryRow(esc(q.question), value, change('extra/'+a.id, 'your answer to: '+q.question.toLowerCase()));
+  });
+  return backLink('check')
+    + '<h1 class="govuk-heading-l">Check your answers before sending them</h1>'
+    + '<h2 class="govuk-heading-m">What your patient told us</h2>'
+    + '<dl class="govuk-summary-list">'+told+'</dl>'
+    + '<h2 class="govuk-heading-m">Anything a DVLA doctor needs to look at</h2>'
+    + '<dl class="govuk-summary-list">'+summaryRow('Your patient’s records show', scValue, change('screening','what your patient’s records show'))+'</dl>'
+    + (extras ? '<h2 class="govuk-heading-m">Questions only you can answer</h2><dl class="govuk-summary-list">'+extras+'</dl>' : '')
+    + '<button class="govuk-button" onclick="state.changing=false;go(\'declaration\')">Continue</button>'
+    + hcpNote('Flags stand out on the way out',
+      '<p>A flagged answer shows both versions, so the clinician sees exactly what they are disagreeing with before they send it.</p>');
+}
+
+/* Declaration */
+function missingAnswers(){
+  const m = [];
+  DECLARATION.forEach(d => { if(!resp(d.id)) m.push({ key:'confirm/'+d.id, text:'Tell us whether “'+d.topic.toLowerCase()+'” is correct' }); });
+  if(state.screening == null) m.push({ key:'screening', text:'Tell us whether your patient’s records show anything a DVLA doctor needs to look at' });
+  shownExtras().forEach(a => { if(!a.answer) m.push({ key:'extra/'+a.id, text:'Answer: '+extraDef(a.id).question }); });
+  return m;
+}
+function renderDeclaration(){
+  const missing = state.form.missing ? missingAnswers() : [];
+  const summary = missing.length ? '<div class="govuk-error-summary" role="alert" tabindex="-1" id="error-summary"><h2>There is a problem</h2><ul>'
+    + missing.map(m => '<li><a href="#/'+m.key+'" onclick="changeTo(\''+m.key+'\');return false;">'+esc(m.text)+'</a></li>').join('') + '</ul></div>' : '';
+  return '<a href="#/check" class="govuk-back-link">Back</a>'
+    + summary
+    + '<h1 class="govuk-heading-l">Declaration</h1>'
+    + '<p class="govuk-body">By sending this, you confirm that the information you’ve given is accurate, from your patient’s records.</p>'
+    + '<p class="govuk-body">Signed in as '+esc(HCP.name)+', '+esc(HCP.role)+', '+esc(REQUEST.practice)+'.</p>'
+    + '<button class="govuk-button" onclick="send()">Confirm and send</button>'
+    + hcpNote('What the clinician is putting their name to',
+      '<p>They are confirming that the patient’s answers match the records, not making a fitness-to-drive assessment. The wording has to make that difference plain, or clinicians will treat a confirmation as a report and charge, check and delay accordingly.</p>'
+      + openQ('liability','does confirming a patient’s answers carry different professional responsibility from writing a report?'));
+}
+function send(){
+  if(missingAnswers().length){ state.form = { missing:true }; route(); return; }
+  state.submitted = true;
+  state.declared = true;
+  evaluate();
+  go('confirmation');
+}
+
+/* Confirmation */
+function renderConfirmation(){
+  const toDoctor = shownExtras().length > 0;
+  return '<div class="govuk-panel govuk-panel--confirmation"><h1 class="govuk-panel__title">Information sent to DVLA</h1>'
+    + '<div class="govuk-panel__body">Reference<br><strong>'+esc(REQUEST.reference)+'</strong></div></div>'
+    + '<h2 class="govuk-heading-m">What happens next</h2>'
+    + (toDoctor
+      ? '<p class="govuk-body">A DVLA doctor will look at your answers alongside what '+esc(state.patient.name)+' told us. If they need more information, we’ll send a new request to your practice inbox.</p>'
+      : '<p class="govuk-body">We’ll use your answers alongside what '+esc(state.patient.name)+' told us. If anything you’ve told us needs a closer look, we’ll send a new request to your practice inbox.</p>')
+    + '<p class="govuk-body">We’ll write to your patient with our decision about their driving licence. You do not need to do anything else.</p>'
+    + '<h2 class="govuk-heading-m">Payment</h2>'
+    + '<p class="govuk-body">We’ll pay your practice for this in the same way we pay for medical reports today.</p>'
+    + hcpNote('Done, and paid as now',
+      '<p>The clinician needs to know two things: that they are finished, and that the practice will be paid. Neither should be a reason to phone.</p>'
+      + openQ('fee','is a confirmation paid at the same rate as a report from records (£50 today)? The screen says “the same way”, not the same amount, until that is decided.')
+      + '<p><a href="#/case">See what DVLA staff see for this case</a></p>');
+}
+
+Object.assign(RENDER, {
+  'arrival':        { title:'New request from DVLA', fn:renderArrival },
+  'sign-in':        { title:'Sign in', fn:renderSignIn },
+  'access':         { title:'Check this request is for your practice', fn:renderAccess },
+  'wrong-practice': { title:'Request not for your practice', fn:renderWrongPractice },
+  'patient':        { title:'Check this is your patient', fn:renderPatient },
+  'not-patient':    { title:'Not your patient', fn:renderNotPatient },
+  'confirm/*':      { title:id => (def(id) ? def(id).hcpQuestion : 'All screens'), fn:renderConfirm },
+  'screening':      { title:'Do your patient’s records show any of these?', fn:renderScreening },
+  'extra/*':        { title:id => (extraDef(id) ? extraDef(id).question : 'All screens'), fn:renderExtra },
+  'check':          { title:'Check your answers', fn:renderCheck },
+  'declaration':    { title:'Declaration', fn:renderDeclaration },
+  'confirmation':   { title:'Information sent to DVLA', fn:renderConfirmation }
+});
 
 /* ---------------------------------------------------------------- */
 /* CHROME AND ROUTER                                                 */
