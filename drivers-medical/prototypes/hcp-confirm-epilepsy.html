@@ -380,7 +380,8 @@ function resetState(scenario){
     signedIn: false,
     patient: { name:PATIENT.name, dob:PATIENT.dob },
     declaration: DECLARATION.map(d => ({ id:d.id, question:d.question, driverAnswer:d.driverAnswer, category:d.category })),
-    viaLink: false,             // arrived from the email link rather than signing in directly
+    viaLink: false,
+    patientConfirmed: false,    // the practice has said the patient is registered with them             // arrived from the email link rather than signing in directly
     matchAll: null,             // 'none' | 'some' | 'cannot': does anything in the records contradict the answers?
     cannotReason: '',
     mismatched: [],             // declaration ids the doctor says differ from their records
@@ -523,8 +524,8 @@ function screenGroups(){
     { title:'Healthcare professional', items:[
       ['arrival','The email arrives in the practice inbox'],
       ['sign-in','Sign in'],
-      ['access','Check this request is for your practice'],
-      ['requests','Your practice\u2019s requests from DVLA (signing in without the email link)'],
+      ['requests','Your practice\u2019s requests from DVLA (home page after sign-in)'],
+      ['patient','Is this patient registered with your practice? (name and date of birth only)'],
       ['request','Epilepsy: check your patient\u2019s answers (why we\u2019re asking, the declaration and one question)'],
       ['which','Which answers do your records contradict? (only if something does)'],
       ['corrections','What do your records show? (only for answers contradicted)'],
@@ -636,6 +637,7 @@ const RENDER = {
 // Invented values for the email. Not confirmed by the service.
 const EMAIL = {
   deadline:'11 December 2026',
+  link:'https://www.gov.uk/check-medical-information-dvla/DM-6204-1187',   // invented address
   phone:'0306 999 0123',            // Ofcom drama range, belongs to nobody
   hours:'Monday to Friday, 8am to 5pm'
 };
@@ -683,8 +685,9 @@ function renderArrival(){
     + '<p class="govuk-body">Tell us whether the patient’s answers match your records. If nothing in your records contradicts them, that’s one answer. You do not need to examine the patient, write a report or give an opinion on whether they can drive.</p>'
     + '<p class="govuk-body">If the records show something a DVLA doctor needs to look at, we’ll ask you a few more questions.</p>'
     + '<h2 class="govuk-heading-s">How to reply</h2>'
-    + '<p class="govuk-body"><a class="govuk-link" href="#/sign-in" onclick="state.viaLink=true;go(\'sign-in\');return false;">Check the patient’s answers</a></p>'
+    + '<p class="govuk-body">Use this link to sign in and check the patient’s answers:<br><a class="govuk-link" href="#/sign-in" onclick="state.viaLink=true;go(\'sign-in\');return false;">'+esc(EMAIL.link)+'</a></p>'
     + '<p class="govuk-body">If you’d rather not use a link, go to GOV.UK, search for “'+esc(SERVICE_NAME)+'” and enter your reference.</p>'
+    + '<p class="govuk-body">Do not reply to this email with information about the patient. We can only accept it through the service.</p>'
     + '<h2 class="govuk-heading-s">If the patient is not registered with you</h2>'
     + '<p class="govuk-body">Use the same link to tell us. We’ll find the right practice.</p>'
     + '<h2 class="govuk-heading-s">Payment</h2>'
@@ -699,7 +702,13 @@ function renderArrival(){
       +'<p>The email names no patient and no condition. Anyone who works in the inbox can read it. The name and date of birth appear only after sign-in.</p>'
       +'<p>An email with a link that asks a clinician to sign in looks like phishing, so it gives a way in without the link.</p>'
       +'<p>Not decided, invented for the prototype: the reply-by date and how it’s worked out, what happens if the practice doesn’t reply, the payment wording, the phone number, and the greeting and sign-off. The “DM” prefix on the reference hints at Drivers Medical, so it can suggest a health matter.</p>'
-      + openQ('privacy','should the patient’s name and date of birth be in the email so admin staff can file it to the right record? It would put a health matter about a named person in a shared inbox. Ask the DPO.')
+      +'<p>Privacy review (privacy-aware-communications skill): the email reveals no name, condition or date of birth. The link shows its full GOV.UK address, because the Service Manual says emails must “only send links which point to the GOV.UK domain”. The address here is invented.</p>'
+      + openQ('DPO','should the patient’s name and date of birth be in the email so admin staff can file it to the right record? It would put a health matter about a named person in a shared inbox.')
+      + openQ('DPO','what is the lawful basis, and the condition for processing health data, for showing a driver’s declaration to their GP?')
+      + openQ('information assurance','is a practice’s shared inbox an acceptable channel for this? Does DVLA have a link or email policy stricter than the Service Manual?')
+      + openQ('anti-phishing','the Service Manual says to include the recipient’s name in emails to make phishing harder. A shared inbox has no named person. What replaces it?')
+      + openQ('service team','does the “DM” reference prefix need to stay? It can suggest a health matter.')
+      + openQ('service team and information assurance','when someone from the practice phones the help line, how does DVLA check who they are before discussing the patient?')
       + openQ('workflow','a link in the practice’s inbox versus a portal. Test with practices in slice 0. Does a link survive the practice’s document workflow?')
       + openQ('which professional','GP or consultant for epilepsy? Which of them holds the records the confirm step needs?'));
 }
@@ -719,30 +728,7 @@ function renderSignIn(){
       '<p>Confirming a patient’s answers is a clinical statement, so DVLA needs to know which clinician made it. Signing in for every request is friction a busy practice will notice. Watch for it.</p>'
       + openQ('sign-in','an individual clinician account or a practice account? An individual account says who confirmed. A practice account is easier for locums and admin staff to share.'));
 }
-function saveSignIn(e){ e.preventDefault(); state.signedIn = true; go(state.viaLink ? 'access' : 'requests'); }
-
-/* Access: the reference from the request plus the practice. */
-function renderAccess(){
-  return '<a href="#/sign-in" class="govuk-back-link">Back</a>'
-    + '<h1 class="govuk-heading-l">Check this request is for your practice</h1>'
-    + '<dl class="govuk-summary-list">'
-    + summaryRow('Reference', esc(REQUEST.reference))
-    + summaryRow('Practice', esc(REQUEST.practice)+' (example practice)')
-    + summaryRow('Signed in as', esc(HCP.name)+', '+esc(HCP.role))
-    + '</dl>'
-    + '<button class="govuk-button" onclick="go(\'request\')">Continue as '+esc(REQUEST.practice)+'</button>'
-    + '<p class="govuk-body"><a class="govuk-link" href="#/wrong-practice">This request is not for our practice</a></p>'
-    + '<p class="govuk-body"><a class="govuk-link" href="#/requests">See all your practice’s requests</a></p>'
-    + hcpNote('The link carries the request',
-      '<p>The reference in the link ties this sign-in to one request and one practice. Nobody types a reference or searches for a patient.</p>');
-}
-function renderWrongPractice(){
-  return '<a href="#/access" class="govuk-back-link">Back</a>'
-    + '<h1 class="govuk-heading-l">We’ve been told this request is not for your practice</h1>'
-    + '<p class="govuk-body">You do not need to do anything else. We’ll ask the patient which practice holds their records, and send the request there.</p>'
-    + hcpNote('A wrong practice is a delay, not a dead end',
-      '<p>The driver pays for this mistake in time. The driver-side messages need to say so plainly.</p>');
-}
+function saveSignIn(e){ e.preventDefault(); state.signedIn = true; go('requests'); }
 
 /* Your requests: every request for the practice, in one list.
    Only this patient's request is built. The others are invented
@@ -754,22 +740,31 @@ const OTHER_REQUESTS = [
     why:'Your patient told us their medication was stopped', replyBy:'2 December 2026', status:'Sent 19 November 2026', statusColour:'green' }
 ];
 function renderRequests(){
-  const ours = '<tr><td><a class="govuk-link" href="#/request"><strong>'+esc(state.patient.name)+'</strong></a><span class="govuk-hint">'+esc(REQUEST.reference)+' · epilepsy</span></td>'
-    + '<td>'+tag('Check your patient’s answers','blue')+'<span class="govuk-hint">'+esc(REQUEST.whyShort)+'</span></td>'
+  const ours = '<tr><td><a class="govuk-link" href="#/patient"><strong>'+esc(state.patient.name)+'</strong></a><span class="govuk-hint">'+esc(REQUEST.reference)+'</span></td>'
+    + '<td>'+tag('Check your patient’s answers','blue')+'</td>'
     + '<td>'+esc(EMAIL.deadline)+'</td>'
     + '<td>'+(state.submitted ? tag('Sent '+formatDate(TODAY),'green') : tag('New','blue'))+'</td></tr>';
-  const others = OTHER_REQUESTS.map(r => '<tr><td><strong>'+esc(r.name)+'</strong><span class="govuk-hint">'+esc(r.reference)+' · epilepsy · example only, not built</span></td>'
-    + '<td>'+tag(r.task, r.colour)+'<span class="govuk-hint">'+esc(r.why)+'</span></td>'
+  const others = OTHER_REQUESTS.map(r => '<tr><td><strong>'+esc(r.name)+'</strong><span class="govuk-hint">'+esc(r.reference)+' · example only, not built</span></td>'
+    + '<td>'+tag(r.task, r.colour)+'</td>'
     + '<td>'+esc(r.replyBy)+'</td>'
     + '<td>'+tag(r.status, r.statusColour)+'</td></tr>').join('');
-  return '<span class="govuk-caption">'+esc(REQUEST.practice)+'</span>'
+  const toDo = (state.submitted ? 0 : 1) + OTHER_REQUESTS.filter(r => r.status === 'New').length;
+  const fromEmail = (state.viaLink && !state.submitted)
+    ? '<div class="govuk-notification-banner" role="region" aria-labelledby="nb-email"><div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title" id="nb-email">From your email</h2></div>'
+      + '<div class="govuk-notification-banner__content"><p class="govuk-notification-banner__heading">Reference '+esc(REQUEST.reference)+'</p>'
+      + '<p><a class="govuk-link" href="#/patient">Open this request</a></p></div></div>'
+    : '';
+  return '<span class="govuk-caption">'+esc(REQUEST.practice)+' · signed in as '+esc(HCP.name)+', '+esc(HCP.role)+'</span>'
     + '<h1 class="govuk-heading-l">Your practice’s requests from DVLA</h1>'
-    + '<p class="govuk-body">Each request says why we’re asking and what we need. We only ask about what the patient has told us, or what only a clinician can answer.</p>'
+    + fromEmail
+    + '<p class="govuk-body">'+(toDo ? (toDo === 1 ? '1 request needs a reply.' : toDo+' requests need a reply.') : 'Nothing needs a reply. We’ll email your practice inbox when there’s a new request.')+' Open a request to check the patient is registered with you. Then we’ll show you what they told us and why we’re asking.</p>'
     + '<div style="overflow-x:auto"><table class="govuk-table"><thead><tr><th scope="col">Patient</th><th scope="col">What we need</th><th scope="col">Reply by</th><th scope="col">Status</th></tr></thead><tbody>'
     + ours + others + '</tbody></table></div>'
     + hcpNote('The request comes to them, and the list is there when they want it',
-      '<p>From 2.5: one list of every request for the practice, each with what’s needed and why. The email link still opens one request directly, so a workshop can test both answers to the inbox or portal question.</p>'
+      '<p>From 2.5: the home page after sign-in is one list of everything the practice needs to do, with how many need a reply. The email link signs in to the same list and points to its request, so the doctor sees the whole workload, not one item at a time.</p>'
+      +'<p>The caption and the “From your email” box carry what the separate access page used to: which practice, who is signed in, and which request the link was for.</p>'
       +'<p>The tag says how big the job is before anyone opens it: checking answers is minutes, questions only a clinician can answer is longer. Only '+esc(state.patient.name)+'’s request is built.</p>'
+      +'<p>Privacy review: the list shows no condition and no medical reason. A request can reach the wrong practice, for example when a patient has moved, so health detail appears only after the practice confirms the patient is theirs. Showing the condition and reason here, as 2.5 does, is an option for the DPO to decide.</p>'
       + openQ('workflow','do practices work from a list like this, from the inbox, or both? Test with practices in slice 0.'));
 }
 
@@ -781,7 +776,7 @@ function declarationList(){
 function renderRequest(){
   const val = state.form.match != null ? state.form.match : (state.matchAll || '');
   const opt = (v, label) => '<div class="govuk-radios__item"><input class="govuk-radios__input" id="match-'+v+'" name="match" type="radio" value="'+v+'"'+(val===v?' checked':'')+'><label class="govuk-label govuk-radios__label" for="match-'+v+'">'+label+'</label></div>';
-  return '<a href="#/'+(state.changing?'check':'requests')+'" class="govuk-back-link">'+(state.changing?'Back':'Your requests')+'</a>'
+  return '<a href="#/'+(state.changing?'check':'patient')+'" class="govuk-back-link">Back</a>'
     + errorSummary()
     + '<span class="govuk-caption">'+esc(state.patient.name)+', born '+esc(state.patient.dob)+' · '+esc(REQUEST.reference)+'</span>'
     + '<h1 class="govuk-heading-l">Epilepsy: check your patient’s answers</h1>'
@@ -804,16 +799,46 @@ function renderRequest(){
     + opt('cannot','I can’t confirm either way')
     + '</div></fieldset></div>'
     + '<button type="submit" class="govuk-button">Continue</button></form>'
-    + '<p class="govuk-body"><a class="govuk-link" href="#/not-patient">This is not our patient</a></p>'
     + hcpNote('Reason, declaration, then the ask',
       '<p>The structure is 2.5’s request page. It opens with why this patient was sent to a clinician at all. That reason is the rule that moved the case from step 1 to step 2, said in plain words. The draft doesn’t define that rule yet, so this one is assumed. The rules page lists it as a gap.</p>'
       +'<p>This breaks “one thing per page” on purpose. A doctor checks a declaration the way they read a referral: all of it at once, against the record. There is still one question on the page.</p>'
       +'<p>“Does anything contradict” is a claim a doctor can make from records that are silent on some answers. “Do they match” isn’t. “I can’t confirm either way” covers records that don’t hold the answers, for example when a hospital consultant manages the epilepsy.</p>'
       + openQ('Dr Nas, DVLA doctors','is every item here safe to confirm rather than report?')
-      + openQ('liability','what does a doctor put their name to? “Nothing in my records contradicts this” is very different from “this patient is safe to drive”.'));
+      + openQ('liability','what does a doctor put their name to? “Nothing in my records contradicts this” is very different from “this patient is safe to drive”.')
+      + openQ('DPO and policy','will drivers expect their answers to be shown to their doctor? The Service Manual says not to rely on the privacy notice for something people “might not expect to happen”. 2.5 asked the driver’s permission. This prototype doesn’t, so the driver-side messages need to say it will happen.'));
+}
+/* Patient check: only the name and date of birth until the practice confirms the patient is theirs. */
+function renderPatient(){
+  const val = state.form.registered != null ? state.form.registered : (state.patientConfirmed ? 'yes' : '');
+  const opt = (v, label) => '<div class="govuk-radios__item"><input class="govuk-radios__input" id="registered-'+v+'" name="registered" type="radio" value="'+v+'"'+(val===v?' checked':'')+'><label class="govuk-label govuk-radios__label" for="registered-'+v+'">'+label+'</label></div>';
+  return '<a href="#/requests" class="govuk-back-link">Your requests</a>'
+    + errorSummary()
+    + '<span class="govuk-caption">Reference '+esc(REQUEST.reference)+'</span>'
+    + '<form onsubmit="savePatient(event)" novalidate>'
+    + '<div class="'+groupClass('registered-yes')+'"><fieldset class="govuk-fieldset">'
+    + '<legend class="govuk-fieldset__legend govuk-fieldset__legend--l"><h1 class="govuk-fieldset__heading">Is this patient registered with your practice?</h1></legend>'
+    + '<dl class="govuk-summary-list">'
+    + summaryRow('Name', esc(state.patient.name))
+    + summaryRow('Date of birth', esc(state.patient.dob))
+    + '</dl>'
+    + errorMsg('registered-yes')
+    + '<div class="govuk-radios">'+opt('yes','Yes')+opt('no','No')+'</div>'
+    + '</fieldset></div>'
+    + '<button type="submit" class="govuk-button">Continue</button></form>'
+    + hcpNote('Who before what',
+      '<p>Privacy review: a request can reach the wrong practice. This page shows only the name and date of birth, and the declaration appears only after a yes. A practice that doesn’t hold the patient never sees their health information.</p>'
+      +'<p>It costs a doctor one click before the review. That is the trade-off.</p>'
+      + openQ('DPO','is a name and date of birth the least a practice needs to identify the patient, or should it be less?'));
+}
+function savePatient(e){
+  e.preventDefault();
+  const picked = e.target.querySelector('input[name="registered"]:checked');
+  if(!picked){ state.errors = [{ field:'registered-yes', text:'Select yes if this patient is registered with your practice' }]; route(); return; }
+  if(picked.value === 'yes'){ state.patientConfirmed = true; go('request'); }
+  else { state.patientConfirmed = false; go('not-patient'); }
 }
 function renderNotPatient(){
-  return '<a href="#/request" class="govuk-back-link">Back</a>'
+  return '<a href="#/patient" class="govuk-back-link">Back</a>'
     + '<h1 class="govuk-heading-l">We’ve been told '+esc(state.patient.name)+' is not your patient</h1>'
     + '<p class="govuk-body">You do not need to do anything else. We’ll ask the patient which practice holds their records, and send the request there.</p>';
 }
@@ -1145,6 +1170,7 @@ function renderConfirmation(){
     + '<p class="govuk-body">We’ll write to your patient with our decision about their driving licence. You do not need to do anything else.</p>'
     + '<h2 class="govuk-heading-m">Payment</h2>'
     + '<p class="govuk-body">We’ll pay your practice in the same way as for medical reports today.</p>'
+    + '<a class="govuk-button" href="#/requests" role="button">Back to your requests</a>'
     + hcpNote('Done, and paid as now',
       '<p>The doctor needs to know two things: that they’ve finished, and that the practice will be paid.</p>'
       + openQ('fee','is a confirmation paid at the same rate as a report from records (£50 today)? The screen says “in the same way”, not the same amount, until that is decided.')
@@ -1154,9 +1180,8 @@ function renderConfirmation(){
 Object.assign(RENDER, {
   'arrival':        { title:'New email from DVLA', fn:renderArrival },
   'sign-in':        { title:'Sign in', fn:renderSignIn },
-  'access':         { title:'Check this request is for your practice', fn:renderAccess },
-  'wrong-practice': { title:'Request not for your practice', fn:renderWrongPractice },
   'requests':       { title:'Your practice’s requests from DVLA', fn:renderRequests, wide:true },
+  'patient':        { title:'Is this patient registered with your practice?', fn:renderPatient },
   'request':        { title:'Epilepsy: check your patient’s answers', fn:renderRequest },
   'not-patient':    { title:'Not your patient', fn:renderNotPatient },
   'cannot-confirm': { title:'Why can’t you confirm your patient’s answers?', fn:renderCannot },
@@ -1321,7 +1346,7 @@ Object.assign(RENDER, {
 function renderChrome(inner, screen){
   const staff = screen.staff;
   const name = staff ? STAFF_NAME : SERVICE_NAME;
-  const home = staff ? '#/case' : '#/arrival';
+  const home = staff ? '#/case' : (state.signedIn ? '#/requests' : '#/arrival');
   const signOut = (!staff && state.signedIn) ? '<a class="govuk-header__signout" href="#" onclick="signOut();return false;">Sign out</a>' : '';
   return '<header class="govuk-header" role="banner"><div class="govuk-header__container">'
     +'<a href="'+home+'" class="govuk-header__homepage-link">'+LOGO+'</a>'+signOut+'</div></header>'
