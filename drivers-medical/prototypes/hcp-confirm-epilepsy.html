@@ -228,7 +228,10 @@ const STAFF_NAME = 'DVLA casework (staff view)';
 // Fixed "today" so the 6 and 12 month rules give the same answer in every workshop.
 const TODAY = '2026-11-27';
 const PATIENT = { name:'Morgan Ellery', dob:'14 June 1987' };
-const REQUEST = { reference:'DM-6204-1187', sent:'20 November 2026', practice:'Elmwood Surgery', inbox:'elmwood.admin@example.com' };
+const REQUEST = { reference:'DM-6204-1187', sent:'20 November 2026', practice:'Elmwood Surgery', inbox:'elmwood.admin@example.com',
+  // Why this declaration came to a clinician (step 1 to step 2). ASSUMED: the draft doesn't define this rule.
+  whyShort:'Your patient told us a doctor reduced their medication',
+  why:'Your patient told us a doctor reduced their epilepsy medication on 10 March 2025. We’d like a clinician to check this, and the rest of their answers, against your records.' };
 const HCP = { name:'Dr Priya Ansell', role:'GP', email:'priya.ansell@example.com' };
 
 /* The driver's declaration (step 1). Same in all three scenarios: what
@@ -377,7 +380,9 @@ function resetState(scenario){
     signedIn: false,
     patient: { name:PATIENT.name, dob:PATIENT.dob },
     declaration: DECLARATION.map(d => ({ id:d.id, question:d.question, driverAnswer:d.driverAnswer, category:d.category })),
-    matchAll: null,             // 'yes' | 'no' once the doctor has reviewed the declaration
+    viaLink: false,             // arrived from the email link rather than signing in directly
+    matchAll: null,             // 'none' | 'some' | 'cannot': does anything in the records contradict the answers?
+    cannotReason: '',
     mismatched: [],             // declaration ids the doctor says differ from their records
     hcpResponse: [],            // { declarationId, confirmed, correction, respondedAt }
     screening: null,            // null until answered; then an array of SCREENING ids (empty = none of these)
@@ -453,7 +458,7 @@ function evaluate(){
   trig('t3').fired = DATE_OR_DIAGNOSIS.some(id => { const r = resp(id); return r && r.confirmed === false; });
   trig('t4').fired = sc.includes('awareness');
   trig('t5').fired = sc.includes('provoked') || sc.includes('headinjury');
-  state.caseOutcome.route = routeFor(state.triggers, gapFlags().length > 0);
+  state.caseOutcome.route = routeFor(state.triggers, gapFlags().length > 0 || state.matchAll === 'cannot');
 }
 // Flags on items that no draft rule covers. The draft is silent on these.
 function gapFlags(){
@@ -472,7 +477,8 @@ function shownExtras(){ return state.extraQuestions.filter(extraShown); }
 
 /* === JOURNEY ORDER === */
 function flow(){
-  return [state.matchAll === 'no' ? 'corrections' : 'review', 'screening']
+  const first = { some:'corrections', cannot:'cannot-confirm' }[state.matchAll] || 'request';
+  return [first, 'screening']
     .concat(shownExtras().length ? ['extra'] : [])
     .concat(['check']);
 }
@@ -484,13 +490,13 @@ function nextAfter(key){
     state.changing = false;
     return 'check';
   }
-  const f = flow(); const i = f.indexOf(key === 'review' ? f[0] : key);
+  const f = flow(); const i = f.indexOf(key === 'request' ? f[0] : key);
   return f[i+1] || 'check';
 }
 function backFrom(key){
   if(state.changing) return 'check';
   const f = flow(); const i = f.indexOf(key);
-  return i > 0 ? f[i-1] : 'patient';
+  return i > 0 ? f[i-1] : 'request';
 }
 function changeTo(key){ state.changing = true; state.errors = null; go(key); }
 function backLink(key){ return '<a href="#/'+backFrom(key)+'" class="govuk-back-link">Back</a>'; }
@@ -518,10 +524,11 @@ function screenGroups(){
       ['arrival','The email arrives in the practice inbox'],
       ['sign-in','Sign in'],
       ['access','Check this request is for your practice'],
-      ['patient','Check this is your patient'],
-      ['review','Check your patient\u2019s answers against your records (all on one page)'],
-      ['which','Which answers are different? (only if they don\u2019t all match)'],
-      ['corrections','What do your records show? (only for answers that differ)'],
+      ['requests','Your practice\u2019s requests from DVLA (signing in without the email link)'],
+      ['request','Epilepsy: check your patient\u2019s answers (why we\u2019re asking, the declaration and one question)'],
+      ['which','Which answers do your records contradict? (only if something does)'],
+      ['corrections','What do your records show? (only for answers contradicted)'],
+      ['cannot-confirm','Why can\u2019t you confirm your patient\u2019s answers? (only if they can\u2019t)'],
       ['screening','Do your patient\u2019s records show any of these?'],
       ['extra','Tell us more for the DVLA doctor (only if a trigger fires)'],
       ['check','Check your answers and send them'],
@@ -601,7 +608,8 @@ function renderRules(){
     + '<table class="govuk-table">'+head(['','Trigger','What happens'])+'<tbody>'+trigRows+'</tbody></table>'
     + '<h2 class="govuk-heading-l">Gaps found while building this</h2>'
     + '<ul class="govuk-list govuk-list--bullet">'
-    + '<li>Nothing in the draft says what moves a case from step 1 to step 2. This prototype assumes the declaration has an exception worth checking, such as a medication change.</li>'
+    + '<li>Nothing in the draft says what moves a case from step 1 to step 2. This prototype assumes a declared medication change is enough, and says so to the doctor under \u201cWhy we\u2019re asking you\u201d.</li>'
+    + '<li>The draft doesn\u2019t say what happens when a clinician can\u2019t confirm the answers either way. The prototype returns the case to the caseworker to decide who to ask instead.</li>'
     + '<li>The draft only says what happens when dates or the diagnosis are contradicted. A flag on any other answer, such as awake or asleep, has no rule. The prototype sends it back to the caseworker.</li>'
     + '<li>A corrected date can itself trip a rule. In scenario 2 the corrected most recent seizure falls within 12 months, which would have meant deciding on the declaration if the driver had given it.</li>'
     + '<li>Dates appear in two lists in the draft: the driver tells us, and the healthcare professional confirms them. Here they are one item, told by the driver and checked by the healthcare professional.</li>'
@@ -672,10 +680,10 @@ function renderArrival(){
     + '<p class="govuk-body">Reply on or before '+esc(EMAIL.deadline)+'.</p>'
     + '<p class="govuk-body">Your reference is '+esc(REQUEST.reference)+'. You’ll see the patient’s name and date of birth after you sign in.</p>'
     + '<h2 class="govuk-heading-s">What we need</h2>'
-    + '<p class="govuk-body">Tell us whether the patient’s answers match your records. If they all match, that’s one answer. You do not need to examine the patient, write a report or give an opinion on whether they can drive.</p>'
+    + '<p class="govuk-body">Tell us whether the patient’s answers match your records. If nothing in your records contradicts them, that’s one answer. You do not need to examine the patient, write a report or give an opinion on whether they can drive.</p>'
     + '<p class="govuk-body">If the records show something a DVLA doctor needs to look at, we’ll ask you a few more questions.</p>'
     + '<h2 class="govuk-heading-s">How to reply</h2>'
-    + '<p class="govuk-body"><a class="govuk-link" href="#/sign-in">Check the patient’s answers</a></p>'
+    + '<p class="govuk-body"><a class="govuk-link" href="#/sign-in" onclick="state.viaLink=true;go(\'sign-in\');return false;">Check the patient’s answers</a></p>'
     + '<p class="govuk-body">If you’d rather not use a link, go to GOV.UK, search for “'+esc(SERVICE_NAME)+'” and enter your reference.</p>'
     + '<h2 class="govuk-heading-s">If the patient is not registered with you</h2>'
     + '<p class="govuk-body">Use the same link to tell us. We’ll find the right practice.</p>'
@@ -711,7 +719,7 @@ function renderSignIn(){
       '<p>Confirming a patient’s answers is a clinical statement, so DVLA needs to know which clinician made it. Signing in for every request is friction a busy practice will notice. Watch for it.</p>'
       + openQ('sign-in','an individual clinician account or a practice account? An individual account says who confirmed. A practice account is easier for locums and admin staff to share.'));
 }
-function saveSignIn(e){ e.preventDefault(); state.signedIn = true; go('access'); }
+function saveSignIn(e){ e.preventDefault(); state.signedIn = true; go(state.viaLink ? 'access' : 'requests'); }
 
 /* Access: the reference from the request plus the practice. */
 function renderAccess(){
@@ -722,8 +730,9 @@ function renderAccess(){
     + summaryRow('Practice', esc(REQUEST.practice)+' (example practice)')
     + summaryRow('Signed in as', esc(HCP.name)+', '+esc(HCP.role))
     + '</dl>'
-    + '<button class="govuk-button" onclick="go(\'patient\')">Continue as '+esc(REQUEST.practice)+'</button>'
+    + '<button class="govuk-button" onclick="go(\'request\')">Continue as '+esc(REQUEST.practice)+'</button>'
     + '<p class="govuk-body"><a class="govuk-link" href="#/wrong-practice">This request is not for our practice</a></p>'
+    + '<p class="govuk-body"><a class="govuk-link" href="#/requests">See all your practice’s requests</a></p>'
     + hcpNote('The link carries the request',
       '<p>The reference in the link ties this sign-in to one request and one practice. Nobody types a reference or searches for a patient.</p>');
 }
@@ -735,89 +744,134 @@ function renderWrongPractice(){
       '<p>The driver pays for this mistake in time. The driver-side messages need to say so plainly.</p>');
 }
 
-/* Patient and request: who, and the size of the job. */
-function renderPatient(){
-  return '<a href="#/access" class="govuk-back-link">Back</a>'
-    + '<span class="govuk-caption">Reference '+esc(REQUEST.reference)+'</span>'
-    + '<h1 class="govuk-heading-l">Check this is your patient</h1>'
-    + '<dl class="govuk-summary-list">'
-    + summaryRow('Name', esc(state.patient.name))
-    + summaryRow('Date of birth', esc(state.patient.dob))
-    + summaryRow('Condition declared', 'Epilepsy')
-    + '</dl>'
-    + '<h2 class="govuk-heading-m">What we’re asking</h2>'
-    + '<ul class="govuk-list govuk-list--bullet">'
-    + '<li>whether the patient’s '+DECLARATION.length+' answers match your records, on one page</li>'
-    + '<li>what your records show, only for any that don’t match</li>'
-    + '<li>whether the records show anything a DVLA doctor needs to look at</li>'
-    + '</ul>'
-    + '<p class="govuk-body">If everything matches, this takes a few minutes. You do not need to examine the patient or give an opinion on whether they can drive.</p>'
-    + '<button class="govuk-button" onclick="go(\'review\')">Continue</button>'
+/* Your requests: every request for the practice, in one list.
+   Only this patient's request is built. The others are invented
+   examples, so the list shows what a practice would see on a normal day. */
+const OTHER_REQUESTS = [
+  { name:'Jordan Hale', reference:'DM-6188-3054', task:'Questions only you can answer', colour:'purple',
+    why:'Your patient told us about a seizure after a head injury', replyBy:'4 December 2026', status:'New', statusColour:'blue' },
+  { name:'Casey Lund', reference:'DM-6097-2219', task:'Check your patient’s answers', colour:'blue',
+    why:'Your patient told us their medication was stopped', replyBy:'2 December 2026', status:'Sent 19 November 2026', statusColour:'green' }
+];
+function renderRequests(){
+  const ours = '<tr><td><a class="govuk-link" href="#/request"><strong>'+esc(state.patient.name)+'</strong></a><span class="govuk-hint">'+esc(REQUEST.reference)+' · epilepsy</span></td>'
+    + '<td>'+tag('Check your patient’s answers','blue')+'<span class="govuk-hint">'+esc(REQUEST.whyShort)+'</span></td>'
+    + '<td>'+esc(EMAIL.deadline)+'</td>'
+    + '<td>'+(state.submitted ? tag('Sent '+formatDate(TODAY),'green') : tag('New','blue'))+'</td></tr>';
+  const others = OTHER_REQUESTS.map(r => '<tr><td><strong>'+esc(r.name)+'</strong><span class="govuk-hint">'+esc(r.reference)+' · epilepsy · example only, not built</span></td>'
+    + '<td>'+tag(r.task, r.colour)+'<span class="govuk-hint">'+esc(r.why)+'</span></td>'
+    + '<td>'+esc(r.replyBy)+'</td>'
+    + '<td>'+tag(r.status, r.statusColour)+'</td></tr>').join('');
+  return '<span class="govuk-caption">'+esc(REQUEST.practice)+'</span>'
+    + '<h1 class="govuk-heading-l">Your practice’s requests from DVLA</h1>'
+    + '<p class="govuk-body">Each request says why we’re asking and what we need. We only ask about what the patient has told us, or what only a clinician can answer.</p>'
+    + '<div style="overflow-x:auto"><table class="govuk-table"><thead><tr><th scope="col">Patient</th><th scope="col">What we need</th><th scope="col">Reply by</th><th scope="col">Status</th></tr></thead><tbody>'
+    + ours + others + '</tbody></table></div>'
+    + hcpNote('The request comes to them, and the list is there when they want it',
+      '<p>From 2.5: one list of every request for the practice, each with what’s needed and why. The email link still opens one request directly, so a workshop can test both answers to the inbox or portal question.</p>'
+      +'<p>The tag says how big the job is before anyone opens it: checking answers is minutes, questions only a clinician can answer is longer. Only '+esc(state.patient.name)+'’s request is built.</p>'
+      + openQ('workflow','do practices work from a list like this, from the inbox, or both? Test with practices in slice 0.'));
+}
+
+/* One request page: who, why we're asking, what they told us, and one question. */
+function declarationList(){
+  return GROUPS.map(g => '<h3 class="govuk-heading-s">'+esc(g.title)+'</h3><dl class="govuk-summary-list">'
+    + g.ids.map(id => summaryRow(esc(def(id).topic), esc(def(id).driverAnswer))).join('') + '</dl>').join('');
+}
+function renderRequest(){
+  const val = state.form.match != null ? state.form.match : (state.matchAll || '');
+  const opt = (v, label) => '<div class="govuk-radios__item"><input class="govuk-radios__input" id="match-'+v+'" name="match" type="radio" value="'+v+'"'+(val===v?' checked':'')+'><label class="govuk-label govuk-radios__label" for="match-'+v+'">'+label+'</label></div>';
+  return '<a href="#/'+(state.changing?'check':'requests')+'" class="govuk-back-link">'+(state.changing?'Back':'Your requests')+'</a>'
+    + errorSummary()
+    + '<span class="govuk-caption">'+esc(state.patient.name)+', born '+esc(state.patient.dob)+' · '+esc(REQUEST.reference)+'</span>'
+    + '<h1 class="govuk-heading-l">Epilepsy: check your patient’s answers</h1>'
+    + '<div class="govuk-inset-text"><strong>Why we’re asking you.</strong> '+esc(REQUEST.why)+'</div>'
+    + '<h2 class="govuk-heading-m">What your patient told us</h2>'
+    + declarationList()
+    + '<h2 class="govuk-heading-m">What we need from you</h2>'
+    + '<p class="govuk-body">Tell us whether anything in your records contradicts these answers. If nothing does, that’s one answer. Then we’ll ask whether the records show anything a DVLA doctor needs to look at.</p>'
+    + '<p class="govuk-body">You do not need to examine your patient, write a report or give an opinion on whether they can drive. We’ll pay your practice in the same way as for medical reports today.</p>'
+    + recordDetails(scenarioRecord())
+    + '<form onsubmit="saveRequest(event)" novalidate>'
+    + '<div class="'+groupClass('match-none')+'"><fieldset class="govuk-fieldset" aria-describedby="match-hint">'
+    + '<legend class="govuk-fieldset__legend"><h2 class="govuk-heading-m" style="margin:0">Does anything in your records contradict these answers?</h2></legend>'
+    + '<div class="govuk-hint" id="match-hint">This is not a statement that your patient is safe to drive. DVLA makes that decision.</div>'
+    + errorMsg('match-none')
+    + '<div class="govuk-radios">'
+    + opt('none','No, nothing in my records contradicts them')
+    + opt('some','Yes, something contradicts them')
+    + '<p class="govuk-radios__divider">or</p>'
+    + opt('cannot','I can’t confirm either way')
+    + '</div></fieldset></div>'
+    + '<button type="submit" class="govuk-button">Continue</button></form>'
     + '<p class="govuk-body"><a class="govuk-link" href="#/not-patient">This is not our patient</a></p>'
-    + hcpNote('Check, not tell',
-      '<p>The first thing the doctor learns is the size of the job: check answers, not write a report. That is the whole bet of the model. If it still feels like a report, it will be treated like one, and charged and delayed like one.</p>'
-      + openQ('which professional','could a GP confirm every one of these from their records, or only from a consultant’s letters?'));
+    + hcpNote('Reason, declaration, then the ask',
+      '<p>The structure is 2.5’s request page. It opens with why this patient was sent to a clinician at all. That reason is the rule that moved the case from step 1 to step 2, said in plain words. The draft doesn’t define that rule yet, so this one is assumed. The rules page lists it as a gap.</p>'
+      +'<p>This breaks “one thing per page” on purpose. A doctor checks a declaration the way they read a referral: all of it at once, against the record. There is still one question on the page.</p>'
+      +'<p>“Does anything contradict” is a claim a doctor can make from records that are silent on some answers. “Do they match” isn’t. “I can’t confirm either way” covers records that don’t hold the answers, for example when a hospital consultant manages the epilepsy.</p>'
+      + openQ('Dr Nas, DVLA doctors','is every item here safe to confirm rather than report?')
+      + openQ('liability','what does a doctor put their name to? “Nothing in my records contradicts this” is very different from “this patient is safe to drive”.'));
 }
 function renderNotPatient(){
-  return '<a href="#/patient" class="govuk-back-link">Back</a>'
+  return '<a href="#/request" class="govuk-back-link">Back</a>'
     + '<h1 class="govuk-heading-l">We’ve been told '+esc(state.patient.name)+' is not your patient</h1>'
     + '<p class="govuk-body">You do not need to do anything else. We’ll ask the patient which practice holds their records, and send the request there.</p>';
 }
-
-/* The whole declaration on one page, and one question about it. */
-function declarationList(){
-  return GROUPS.map(g => '<h2 class="govuk-heading-m">'+esc(g.title)+'</h2><dl class="govuk-summary-list">'
-    + g.ids.map(id => summaryRow(esc(def(id).topic), esc(def(id).driverAnswer))).join('') + '</dl>').join('');
-}
-function renderReview(){
-  const val = state.form.match != null ? state.form.match : (state.matchAll || '');
-  return '<a href="#/'+(state.changing?'check':'patient')+'" class="govuk-back-link">Back</a>'
-    + errorSummary()
-    + '<span class="govuk-caption">'+esc(state.patient.name)+', born '+esc(state.patient.dob)+'</span>'
-    + '<h1 class="govuk-heading-l">Check your patient’s answers against your records</h1>'
-    + '<p class="govuk-body">This is what your patient told us about their epilepsy.</p>'
-    + declarationList()
-    + recordDetails(scenarioRecord())
-    + '<form onsubmit="saveReview(event)" novalidate>'
-    + '<div class="'+groupClass('match-yes')+'"><fieldset class="govuk-fieldset">'
-    + '<legend class="govuk-fieldset__legend"><h2 class="govuk-heading-m" style="margin:0">Do your records match all of these answers?</h2></legend>'
-    + errorMsg('match-yes')
-    + '<div class="govuk-radios">'
-    + '<div class="govuk-radios__item"><input class="govuk-radios__input" id="match-yes" name="match" type="radio" value="yes"'+(val==='yes'?' checked':'')+'><label class="govuk-label govuk-radios__label" for="match-yes">Yes, they all match</label></div>'
-    + '<div class="govuk-radios__item"><input class="govuk-radios__input" id="match-no" name="match" type="radio" value="no"'+(val==='no'?' checked':'')+'><label class="govuk-label govuk-radios__label" for="match-no">No, one or more are different</label></div>'
-    + '</div></fieldset></div>'
-    + '<button type="submit" class="govuk-button">Continue</button></form>'
-    + hcpNote('A doctor reads a summary, not a questionnaire',
-      '<p>This breaks “one thing per page” on purpose. A doctor checks a declaration the way they read a referral: all of it at once, against the record. Splitting it into 9 pages made each answer look like a separate clinical question and turned a check into a form.</p>'
-      +'<p>There is still one question on the page. When the records agree, which the model bets is most of the time, the whole check is one answer.</p>'
-      +'<p>Diagnosis, the medication change and alcohol or drugs are the items the draft says a clinician confirms. The rest the driver tells us. The rules page has the full sort.</p>'
-      + openQ('Dr Nas, DVLA doctors','is every item here safe to confirm rather than report?')
-      + openQ('liability','does confirming a patient’s answers carry different professional responsibility from writing a report?'));
-}
-function saveReview(e){
+function saveRequest(e){
   e.preventDefault();
   const picked = e.target.querySelector('input[name="match"]:checked');
-  if(!picked){ state.errors = [{ field:'match-yes', text:'Select whether your records match all of these answers' }]; route(); return; }
+  if(!picked){ state.errors = [{ field:'match-none', text:'Select whether anything in your records contradicts these answers' }]; route(); return; }
   state.matchAll = picked.value;
-  if(picked.value === 'yes'){
-    state.mismatched = [];
+  if(picked.value === 'none'){
+    state.mismatched = []; state.cannotReason = '';
     const t = nowStamp();
     state.hcpResponse = DECLARATION.map(d => ({ declarationId:d.id, confirmed:true, correction:'', respondedAt:t }));
     evaluate();
-    go(nextAfter('review'));
-  } else {
+    go(nextAfter('request'));
+  } else if(picked.value === 'some'){
+    state.cannotReason = '';
     go('which');
+  } else {
+    go('cannot-confirm');
   }
+}
+
+/* Can't confirm either way */
+function renderCannot(){
+  const val = state.form.reason != null ? state.form.reason : state.cannotReason;
+  return '<a href="#/request" class="govuk-back-link">Back</a>'
+    + errorSummary()
+    + '<form onsubmit="saveCannot(event)" novalidate>'
+    + '<div class="'+groupClass('reason')+'"><h1 class="govuk-heading-l"><label for="reason">Why can’t you confirm your patient’s answers?</label></h1>'
+    + '<div class="govuk-hint" id="reason-hint">For example, a hospital consultant manages their epilepsy and you don’t have recent letters.</div>'
+    + errorMsg('reason')
+    + '<textarea class="govuk-textarea'+(errFor('reason')?' govuk-textarea--error':'')+'" id="reason" name="reason" rows="4" aria-describedby="reason-hint">'+esc(val)+'</textarea></div>'
+    + '<button type="submit" class="govuk-button">Continue</button></form>'
+    + hcpNote('Not knowing is an answer',
+      '<p>Without this option, a doctor whose records are silent either guesses or doesn’t reply. Both are worse than saying so. The reason tells the caseworker who to ask instead.</p>'
+      +'<p>The draft has no rule for this. The prototype returns the case to the caseworker.</p>'
+      + openQ('Dr Nas, DVLA doctors','when a GP can’t confirm, should the request go straight to the consultant?'));
+}
+function saveCannot(e){
+  e.preventDefault();
+  const v = e.target.reason.value;
+  if(!v.trim()){ state.errors = [{ field:'reason', text:'Enter why you can’t confirm your patient’s answers' }]; state.form = { reason:v }; route(); return; }
+  state.cannotReason = v.trim();
+  state.mismatched = [];
+  const t = nowStamp();
+  state.hcpResponse = DECLARATION.map(d => ({ declarationId:d.id, confirmed:null, correction:'', respondedAt:t }));
+  evaluate();
+  go(nextAfter('request'));
 }
 
 /* Which answers differ */
 function renderWhich(){
   const sel = state.form.which || state.mismatched || [];
-  return '<a href="#/review" class="govuk-back-link">Back</a>'
+  return '<a href="#/request" class="govuk-back-link">Back</a>'
     + errorSummary()
     + '<form onsubmit="saveWhich(event)" novalidate>'
     + '<div class="'+groupClass('which-'+DECLARATION[0].id)+'"><fieldset class="govuk-fieldset" aria-describedby="which-hint">'
-    + '<legend class="govuk-fieldset__legend govuk-fieldset__legend--l"><h1 class="govuk-fieldset__heading">Which answers are different in your records?</h1></legend>'
+    + '<legend class="govuk-fieldset__legend govuk-fieldset__legend--l"><h1 class="govuk-fieldset__heading">Which answers do your records contradict?</h1></legend>'
     + '<div class="govuk-hint" id="which-hint">Select all that apply.</div>'
     + errorMsg('which-'+DECLARATION[0].id)
     + '<div class="govuk-checkboxes">'
@@ -832,7 +886,7 @@ function renderWhich(){
 function saveWhich(e){
   e.preventDefault();
   const picked = Array.from(e.target.querySelectorAll('input[name="which"]:checked')).map(i => i.value);
-  if(!picked.length){ state.errors = [{ field:'which-'+DECLARATION[0].id, text:'Select which answers are different in your records' }]; state.form = { which:[] }; route(); return; }
+  if(!picked.length){ state.errors = [{ field:'which-'+DECLARATION[0].id, text:'Select which answers your records contradict' }]; state.form = { which:[] }; route(); return; }
   state.mismatched = picked;
   go('corrections');
 }
@@ -905,7 +959,7 @@ function saveCorrections(e){
     ? { declarationId:d.id, confirmed:false, correction:values[d.id], respondedAt:t }
     : { declarationId:d.id, confirmed:true, correction:'', respondedAt:t });
   evaluate();
-  go(nextAfter('review'));
+  go(nextAfter('request'));
 }
 
 /* Clinical judgement: one question, never answered by a rule. */
@@ -1023,7 +1077,7 @@ function saveExtra(e){
 /* Check your answers, with the declaration on the same page */
 function missingAnswers(){
   const m = [];
-  if(state.hcpResponse.length < DECLARATION.length) m.push({ key:'review', text:'Tell us whether your records match your patient’s answers' });
+  if(state.hcpResponse.length < DECLARATION.length) m.push({ key:'request', text:'Tell us whether anything in your records contradicts your patient’s answers' });
   if(state.screening == null) m.push({ key:'screening', text:'Tell us whether your patient’s records show anything a DVLA doctor needs to look at' });
   if(shownExtras().some(a => !a.answer)) m.push({ key:'extra', text:'Answer the questions for the DVLA doctor' });
   return m;
@@ -1035,9 +1089,11 @@ function renderCheck(){
   const flagged = state.hcpResponse.filter(r => r.confirmed === false);
   let matchValue;
   if(!state.hcpResponse.length) matchValue = '<strong>Not answered yet</strong>';
-  else if(!flagged.length) matchValue = 'Yes, they all match';
-  else matchValue = 'No, '+flagged.length+' '+(flagged.length === 1 ? 'is' : 'are')+' different';
-  let rows = summaryRow('Do your records match all of your patient’s answers?', matchValue, change('review','whether your records match'));
+  else if(state.matchAll === 'cannot') matchValue = 'I can’t confirm either way';
+  else if(!flagged.length) matchValue = 'No, nothing in my records contradicts them';
+  else matchValue = 'Yes, '+flagged.length+' '+(flagged.length === 1 ? 'answer' : 'answers');
+  let rows = summaryRow('Does anything in your records contradict your patient’s answers?', matchValue, change('request','whether your records contradict the answers'));
+  if(state.matchAll === 'cannot') rows += summaryRow('Why you can’t confirm them', esc(state.cannotReason), change('cannot-confirm','why you can’t confirm them'));
   flagged.forEach(r => {
     const d = def(r.declarationId);
     rows += summaryRow(esc(d.topic), 'Your records show: '+esc(correctionText(d, r))+'<br><span class="govuk-body-s">Your patient told us: '+esc(d.driverAnswer)+'</span>', change('corrections', d.topic.toLowerCase()));
@@ -1083,7 +1139,9 @@ function renderConfirmation(){
     + '<h2 class="govuk-heading-m">What happens next</h2>'
     + (toDoctor
       ? '<p class="govuk-body">A DVLA doctor will look at your answers with what '+esc(state.patient.name)+' told us. If they need more information, we’ll email your practice inbox.</p>'
-      : '<p class="govuk-body">We’ll use your answers with what '+esc(state.patient.name)+' told us. We’ll only contact you again if a DVLA doctor needs more information.</p>')
+      : state.matchAll === 'cannot'
+        ? '<p class="govuk-body">A caseworker will decide who to ask instead, for example the hospital team who manage your patient’s epilepsy. You do not need to do anything else for this request.</p>'
+        : '<p class="govuk-body">We’ll use your answers with what '+esc(state.patient.name)+' told us. We’ll only contact you again if a DVLA doctor needs more information.</p>')
     + '<p class="govuk-body">We’ll write to your patient with our decision about their driving licence. You do not need to do anything else.</p>'
     + '<h2 class="govuk-heading-m">Payment</h2>'
     + '<p class="govuk-body">We’ll pay your practice in the same way as for medical reports today.</p>'
@@ -1098,10 +1156,11 @@ Object.assign(RENDER, {
   'sign-in':        { title:'Sign in', fn:renderSignIn },
   'access':         { title:'Check this request is for your practice', fn:renderAccess },
   'wrong-practice': { title:'Request not for your practice', fn:renderWrongPractice },
-  'patient':        { title:'Check this is your patient', fn:renderPatient },
+  'requests':       { title:'Your practice’s requests from DVLA', fn:renderRequests, wide:true },
+  'request':        { title:'Epilepsy: check your patient’s answers', fn:renderRequest },
   'not-patient':    { title:'Not your patient', fn:renderNotPatient },
-  'review':         { title:'Check your patient’s answers against your records', fn:renderReview },
-  'which':          { title:'Which answers are different in your records?', fn:renderWhich },
+  'cannot-confirm': { title:'Why can’t you confirm your patient’s answers?', fn:renderCannot },
+  'which':          { title:'Which answers do your records contradict?', fn:renderWhich },
   'corrections':    { title:'What do your records show?', fn:renderCorrections },
   'screening':      { title:'Do your patient’s records show any of these?', fn:renderScreening },
   'extra':          { title:'Tell us more for the DVLA doctor', fn:renderExtra },
@@ -1168,7 +1227,8 @@ function renderCase(){
   } else {
     explain = fired.length
       ? '<p>Triggers that fired: '+fired.map(t => '<strong>'+t.id+'</strong> ('+esc(t.rule.toLowerCase())+')').join('; ')+'.</p>'
-      : '<p>No trigger fired. Every answer was confirmed and nothing needs a doctor’s judgement.</p>';
+      : (state.matchAll === 'cannot' || gapFlags().length ? '<p>No trigger fired.</p>' : '<p>No trigger fired. Every answer was confirmed and nothing needs a doctor’s judgement.</p>');
+    if(state.matchAll === 'cannot') explain += '<p>The healthcare professional couldn\u2019t confirm the answers either way: \u201c'+esc(state.cannotReason)+'\u201d. The draft has no rule for this. The prototype returns the case to the caseworker.</p>';
     if(gapFlags().length) explain += '<p>A flag on '+gapFlags().map(r => esc(def(r.declarationId).topic.toLowerCase())).join(', ')+' has no draft rule. The prototype returns the case to the caseworker.</p>';
     const ifConfirmed = routeFor(state.triggers.map(t => ({ id:t.id, fired: (t.id === 't3') ? false : t.fired })), false);
     if(ifConfirmed !== co.route) explain += '<p>If every answer had been confirmed, the outcome would have been: '+esc(ROUTES[ifConfirmed].label)+'.</p>';
@@ -1186,6 +1246,7 @@ function renderCase(){
     const r = resp(d.id);
     let hcp, status;
     if(!r){ hcp = 'No response yet'; status = tag('Waiting','grey'); }
+    else if(r.confirmed === null){ hcp = 'Can\u2019t confirm either way'; status = tag('Not confirmed','orange'); }
     else if(r.confirmed){ hcp = 'Confirmed'; status = tag('Confirmed','green'); }
     else { hcp = '<strong>Records show: '+esc(correctionText(d, r))+'</strong>'; status = tag('Flagged','red'); }
     rows += '<tr><td><strong>'+esc(d.topic)+'</strong></td><td>'+esc(CATEGORIES[d.category])+'</td><td>'+esc(d.driverAnswer)+'</td><td>'+hcp+(r?'<br><span class="govuk-body-s">'+esc(r.respondedAt)+'</span>':'')+'</td><td>'+status+'</td></tr>';
